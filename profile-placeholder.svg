@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="104" viewBox="0 0 104 104" role="img" aria-labelledby="title">
+  <title id="title">프로필 이미지 자리</title>
+  <circle cx="52" cy="52" r="52" fill="#e8e6e1"/>
+  <text x="52" y="58" fill="#1b1b1b" font-family="Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle">YN</text>
+</svg>

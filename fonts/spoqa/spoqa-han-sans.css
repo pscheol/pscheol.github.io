@@ -1,0 +1,27 @@
+/*
+ * Spoqa Han Sans Neo — 셀프호스팅 (한글 서브셋 woff2)
+ * 출처: https://spoqa.github.io/spoqa-han-sans/ (SIL Open Font License 1.1)
+ * url() 은 이 파일 기준 상대경로 → BASE_PATH(프로젝트 페이지) 와 무관하게 안전.
+ * 실제 사용 굵기는 400/500/700. 600·800 은 Spoqa 에 없어 브라우저가 700 으로 매칭한다.
+ */
+@font-face {
+  font-family: "Spoqa Han Sans Neo";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("./SpoqaHanSansNeo-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Spoqa Han Sans Neo";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("./SpoqaHanSansNeo-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Spoqa Han Sans Neo";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("./SpoqaHanSansNeo-Bold.woff2") format("woff2");
+}

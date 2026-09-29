@@ -1,0 +1,928 @@
+<!DOCTYPE html><html lang="ko" data-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script>(function(){const defaultTheme = "dark";
+
+      (() => {
+        const root = document.documentElement;
+        const apply = () => {
+          try {
+            const saved = localStorage.getItem('blog-theme');
+            root.dataset.theme = saved || defaultTheme;
+          } catch (_) {
+            /* noop */
+          }
+        };
+        // 첫 페인트가 끝난 뒤에만 배경/색 전환(transition)을 허용한다.
+        // 초기 로드·페이지 스왑에서 서버 기본값(lofi)→저장 테마(dark) 변경이
+        // 애니메이션되어 흰 배경이 번쩍이는 FOUC 를 막기 위함.
+        const enableTransitions = () =>
+          requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('theme-ready')));
+        apply();
+        enableTransitions();
+        // View Transitions: 페이지 스왑 후 html의 data-theme 가 서버 기본값으로
+        // 되돌아가므로 localStorage 값으로 다시 적용한다. 스왑 순간엔 전환을 잠시 끄고
+        // (theme-ready 제거) 즉시 테마를 복원한 뒤, 다음 페인트에서 다시 켠다.
+        document.addEventListener('astro:before-swap', () => root.classList.remove('theme-ready'));
+        document.addEventListener('astro:after-swap', () => {
+          apply();
+          enableTransitions();
+        });
+      })();
+    })();</script><script>(function(){const defaultLang = "ko";
+const langs = ["ko","en"];
+
+      (() => {
+        // 저장된 언어를 페인트 전에 <html lang> 에 적용 (텍스트 교체는 scripts/i18n.ts 담당).
+        const apply = () => {
+          try {
+            const saved = localStorage.getItem('blog-lang');
+            document.documentElement.lang = saved && langs.includes(saved) ? saved : defaultLang;
+          } catch (_) {
+            document.documentElement.lang = defaultLang;
+          }
+        };
+        apply();
+        document.addEventListener('astro:after-swap', apply);
+      })();
+    })();</script><link rel="icon" href="/favicon.svg" type="image/svg+xml"><title>3. Harness Engineering(하네스 엔지니어링) — AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술 — 거꾸로 바라본 세상</title><meta name="description" content="규칙 문서, 코드로 강제하는 권한 경계, 검증·피드백 루프를 묶어 AI 작업을 재현 가능하게 만드는 하네스 설계 방법."><link rel="canonical" href="https://pscheol.github.io/posts/3-harness-engineering-%ED%95%98%EB%84%A4%EC%8A%A4-%EC%97%94%EC%A7%80%EB%8B%88%EC%96%B4%EB%A7%81-ai%EA%B0%80-%EC%8B%A4%EC%88%98%EB%A5%BC-%EB%AA%BB%ED%95%98%EA%B2%8C-%ED%95%98%EA%B8%B0-%EC%9C%84%ED%95%B4-%EA%B7%9C%EC%B9%99%EA%B3%BC-%EC%9A%B8%ED%83%80%EB%A6%AC%EB%A5%BC-%EC%84%A4%EA%B3%84%ED%95%98%EB%8A%94-%EA%B8%B0%EC%88%A0/"><meta property="og:type" content="article"><meta property="og:title" content="3. Harness Engineering(하네스 엔지니어링) — AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술 — 거꾸로 바라본 세상"><meta property="og:description" content="규칙 문서, 코드로 강제하는 권한 경계, 검증·피드백 루프를 묶어 AI 작업을 재현 가능하게 만드는 하네스 설계 방법."><meta property="og:url" content="https://pscheol.github.io/posts/3-harness-engineering-%ED%95%98%EB%84%A4%EC%8A%A4-%EC%97%94%EC%A7%80%EB%8B%88%EC%96%B4%EB%A7%81-ai%EA%B0%80-%EC%8B%A4%EC%88%98%EB%A5%BC-%EB%AA%BB%ED%95%98%EA%B2%8C-%ED%95%98%EA%B8%B0-%EC%9C%84%ED%95%B4-%EA%B7%9C%EC%B9%99%EA%B3%BC-%EC%9A%B8%ED%83%80%EB%A6%AC%EB%A5%BC-%EC%84%A4%EA%B3%84%ED%95%98%EB%8A%94-%EA%B8%B0%EC%88%A0/"><meta property="og:site_name" content="거꾸로 바라본 세상"><meta name="twitter:card" content="summary_large_image"><meta name="generator" content="Astro v7.2.8"><link rel="alternate" type="application/rss+xml" title="거꾸로 바라본 세상" href="/rss.xml"><link rel="preload" as="font" type="font/woff2" href="/fonts/spoqa/SpoqaHanSansNeo-Regular.woff2" crossorigin><link rel="stylesheet" href="/fonts/spoqa/spoqa-han-sans.css"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3181192548234541" crossorigin="anonymous"></script><script>(function(){const containerId = "GTM-MS56C6RZ";
+
+        (() => {
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+          const loader = document.createElement('script');
+          loader.async = true;
+          loader.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`;
+          document.head.appendChild(loader);
+        })();
+      })();</script><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.CYDbzu1r.js"></script><link rel="stylesheet" href="/_astro/BaseLayout.D_Tib5bT.css"><link rel="stylesheet" href="/_astro/_..DWKV_oZL.css"></head><body><noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MS56C6RZ" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript><a class="shell-skip" href="#site-content" data-i18n="shell.skip">본문으로 건너뛰기</a><header class="site-header"><div class="header-inner"><a class="brand" href="/">거꾸로 바라본 세상</a><div class="header-actions"><button class="icon-btn square" id="searchBtn" type="button" aria-label="검색" data-i18n-attr="aria-label:header.searchBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></button><button class="icon-btn square hamburger" id="burger" type="button" aria-label="메뉴" data-i18n-attr="aria-label:header.menuBtn" aria-controls="mobileMenu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"></path></svg></button></div></div></header><div class="mobile-menu" id="mobileMenu"><div class="wrap"><a href="/" data-i18n="nav.home">홈</a><details open><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;기술&quot;,&quot;en&quot;:&quot;Tech&quot;}">기술</span><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="mobile-sub"><a href="/type/tech"><span data-i18n-labels="{&quot;ko&quot;:&quot;기술&quot;,&quot;en&quot;:&quot;Tech&quot;}">기술</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;프로그래밍&quot;,&quot;en&quot;:&quot;Programming&quot;}">프로그래밍</span><small class="category-count">68</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍"><span data-i18n-labels="{&quot;ko&quot;:&quot;프로그래밍&quot;,&quot;en&quot;:&quot;Programming&quot;}">프로그래밍</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;비동기&quot;,&quot;en&quot;:&quot;Asynchronous Programming&quot;}">비동기</span><small class="category-count">24</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/비동기"><span data-i18n-labels="{&quot;ko&quot;:&quot;비동기&quot;,&quot;en&quot;:&quot;Asynchronous Programming&quot;}">비동기</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/비동기/리액티브-프로그래밍"><span data-i18n-labels="{&quot;ko&quot;:&quot;리액티브 프로그래밍&quot;,&quot;en&quot;:&quot;Reactive Programming&quot;}">리액티브 프로그래밍</span><small>24</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;Java&quot;,&quot;en&quot;:&quot;Java&quot;}">Java</span><small class="category-count">23</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/java"><span data-i18n-labels="{&quot;ko&quot;:&quot;Java&quot;,&quot;en&quot;:&quot;Java&quot;}">Java</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/java/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Basics&quot;}">기초</span><small>11</small></a><a class="category-leaf" href="/category/프로그래밍/java/입출력과-네트워크"><span data-i18n-labels="{&quot;ko&quot;:&quot;입출력과 네트워크&quot;,&quot;en&quot;:&quot;I/O and Networking&quot;}">입출력과 네트워크</span><small>7</small></a><a class="category-leaf" href="/category/프로그래밍/java/동시성"><span data-i18n-labels="{&quot;ko&quot;:&quot;동시성&quot;,&quot;en&quot;:&quot;Concurrency&quot;}">동시성</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaScript&quot;,&quot;en&quot;:&quot;JavaScript&quot;}">JavaScript</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/javascript"><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaScript&quot;,&quot;en&quot;:&quot;JavaScript&quot;}">JavaScript</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/javascript/언어-기능"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 기능&quot;,&quot;en&quot;:&quot;Language Features&quot;}">언어 기능</span><small>12</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;Kotlin&quot;,&quot;en&quot;:&quot;Kotlin&quot;}">Kotlin</span><small class="category-count">4</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/kotlin"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kotlin&quot;,&quot;en&quot;:&quot;Kotlin&quot;}">Kotlin</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/kotlin/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Basics&quot;}">기초</span><small>4</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;TypeScript&quot;,&quot;en&quot;:&quot;TypeScript&quot;}">TypeScript</span><small class="category-count">4</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/typescript"><span data-i18n-labels="{&quot;ko&quot;:&quot;TypeScript&quot;,&quot;en&quot;:&quot;TypeScript&quot;}">TypeScript</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/typescript/언어-기능"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 기능&quot;,&quot;en&quot;:&quot;Language Features&quot;}">언어 기능</span><small>4</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;GUI&quot;,&quot;en&quot;:&quot;GUI&quot;}">GUI</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/gui"><span data-i18n-labels="{&quot;ko&quot;:&quot;GUI&quot;,&quot;en&quot;:&quot;GUI&quot;}">GUI</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/gui/javafx"><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaFX&quot;,&quot;en&quot;:&quot;JavaFX&quot;}">JavaFX</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;컴퓨터 과학&quot;,&quot;en&quot;:&quot;Computer Science&quot;}">컴퓨터 과학</span><small class="category-count">63</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/컴퓨터-과학"><span data-i18n-labels="{&quot;ko&quot;:&quot;컴퓨터 과학&quot;,&quot;en&quot;:&quot;Computer Science&quot;}">컴퓨터 과학</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;알고리즘&quot;,&quot;en&quot;:&quot;Algorithms&quot;}">알고리즘</span><small class="category-count">63</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/컴퓨터-과학/알고리즘"><span data-i18n-labels="{&quot;ko&quot;:&quot;알고리즘&quot;,&quot;en&quot;:&quot;Algorithms&quot;}">알고리즘</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/코딩-테스트"><span data-i18n-labels="{&quot;ko&quot;:&quot;코딩 테스트&quot;,&quot;en&quot;:&quot;Coding Tests&quot;}">코딩 테스트</span><small>44</small></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/이론"><span data-i18n-labels="{&quot;ko&quot;:&quot;이론&quot;,&quot;en&quot;:&quot;Theory&quot;}">이론</span><small>10</small></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/자료구조"><span data-i18n-labels="{&quot;ko&quot;:&quot;자료구조&quot;,&quot;en&quot;:&quot;Data Structures&quot;}">자료구조</span><small>9</small></a></div></details></div></details><details class="category-node depth-1" open><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;AI&quot;,&quot;en&quot;:&quot;AI&quot;}">AI</span><small class="category-count">48</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai"><span data-i18n-labels="{&quot;ko&quot;:&quot;AI&quot;,&quot;en&quot;:&quot;AI&quot;}">AI</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 모델&quot;,&quot;en&quot;:&quot;Language Models&quot;}">언어 모델</span><small class="category-count">28</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/언어-모델"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 모델&quot;,&quot;en&quot;:&quot;Language Models&quot;}">언어 모델</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/언어-모델/응용"><span data-i18n-labels="{&quot;ko&quot;:&quot;응용&quot;,&quot;en&quot;:&quot;Applications&quot;}">응용</span><small>16</small></a><a class="category-leaf" href="/category/ai/언어-모델/개념"><span data-i18n-labels="{&quot;ko&quot;:&quot;개념&quot;,&quot;en&quot;:&quot;Concepts&quot;}">개념</span><small>12</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Development Tools&quot;}">개발 도구</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/개발-도구"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Development Tools&quot;}">개발 도구</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/개발-도구/langchain"><span data-i18n-labels="{&quot;ko&quot;:&quot;LangChain&quot;,&quot;en&quot;:&quot;LangChain&quot;}">LangChain</span><small>11</small></a><a class="category-leaf" href="/category/ai/개발-도구/spring-ai"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring AI&quot;,&quot;en&quot;:&quot;Spring AI&quot;}">Spring AI</span><small>1</small></a></div></details><details class="category-node depth-2" open><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 방법&quot;,&quot;en&quot;:&quot;Development Methods&quot;}">개발 방법</span><small class="category-count">5</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/개발-방법"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 방법&quot;,&quot;en&quot;:&quot;Development Methods&quot;}">개발 방법</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf active" href="/category/ai/개발-방법/ai-엔지니어링" aria-current="page"><span data-i18n-labels="{&quot;ko&quot;:&quot;AI 엔지니어링&quot;,&quot;en&quot;:&quot;AI Engineering&quot;}">AI 엔지니어링</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;머신러닝&quot;,&quot;en&quot;:&quot;Machine Learning&quot;}">머신러닝</span><small class="category-count">3</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/머신러닝"><span data-i18n-labels="{&quot;ko&quot;:&quot;머신러닝&quot;,&quot;en&quot;:&quot;Machine Learning&quot;}">머신러닝</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/머신러닝/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>3</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 개발&quot;,&quot;en&quot;:&quot;Web Development&quot;}">웹 개발</span><small class="category-count">36</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발"><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 개발&quot;,&quot;en&quot;:&quot;Web Development&quot;}">웹 개발</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;백엔드&quot;,&quot;en&quot;:&quot;Backend&quot;}">백엔드</span><small class="category-count">24</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/백엔드"><span data-i18n-labels="{&quot;ko&quot;:&quot;백엔드&quot;,&quot;en&quot;:&quot;Backend&quot;}">백엔드</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring&quot;,&quot;en&quot;:&quot;Spring&quot;}">Spring</span><small>8</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/netty"><span data-i18n-labels="{&quot;ko&quot;:&quot;Netty&quot;,&quot;en&quot;:&quot;Netty&quot;}">Netty</span><small>5</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring-webflux"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring WebFlux&quot;,&quot;en&quot;:&quot;Spring WebFlux&quot;}">Spring WebFlux</span><small>5</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/jpa"><span data-i18n-labels="{&quot;ko&quot;:&quot;JPA&quot;,&quot;en&quot;:&quot;JPA&quot;}">JPA</span><small>4</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/mybatis"><span data-i18n-labels="{&quot;ko&quot;:&quot;MyBatis&quot;,&quot;en&quot;:&quot;MyBatis&quot;}">MyBatis</span><small>1</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring-cloud"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring Cloud&quot;,&quot;en&quot;:&quot;Spring Cloud&quot;}">Spring Cloud</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;프론트엔드&quot;,&quot;en&quot;:&quot;Frontend&quot;}">프론트엔드</span><small class="category-count">11</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/프론트엔드"><span data-i18n-labels="{&quot;ko&quot;:&quot;프론트엔드&quot;,&quot;en&quot;:&quot;Frontend&quot;}">프론트엔드</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/프론트엔드/vue"><span data-i18n-labels="{&quot;ko&quot;:&quot;Vue&quot;,&quot;en&quot;:&quot;Vue&quot;}">Vue</span><small>8</small></a><a class="category-leaf" href="/category/웹-개발/프론트엔드/jsp"><span data-i18n-labels="{&quot;ko&quot;:&quot;JSP&quot;,&quot;en&quot;:&quot;JSP&quot;}">JSP</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;API&quot;,&quot;en&quot;:&quot;API&quot;}">API</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/api"><span data-i18n-labels="{&quot;ko&quot;:&quot;API&quot;,&quot;en&quot;:&quot;API&quot;}">API</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/api/grpc"><span data-i18n-labels="{&quot;ko&quot;:&quot;gRPC&quot;,&quot;en&quot;:&quot;gRPC&quot;}">gRPC</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;인프라&quot;,&quot;en&quot;:&quot;Infrastructure&quot;}">인프라</span><small class="category-count">33</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라"><span data-i18n-labels="{&quot;ko&quot;:&quot;인프라&quot;,&quot;en&quot;:&quot;Infrastructure&quot;}">인프라</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;컨테이너&quot;,&quot;en&quot;:&quot;Containers&quot;}">컨테이너</span><small class="category-count">16</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/컨테이너"><span data-i18n-labels="{&quot;ko&quot;:&quot;컨테이너&quot;,&quot;en&quot;:&quot;Containers&quot;}">컨테이너</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/컨테이너/docker"><span data-i18n-labels="{&quot;ko&quot;:&quot;Docker&quot;,&quot;en&quot;:&quot;Docker&quot;}">Docker</span><small>11</small></a><a class="category-leaf" href="/category/인프라/컨테이너/kubernetes"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kubernetes&quot;,&quot;en&quot;:&quot;Kubernetes&quot;}">Kubernetes</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;운영체제&quot;,&quot;en&quot;:&quot;Operating Systems&quot;}">운영체제</span><small class="category-count">9</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/운영체제"><span data-i18n-labels="{&quot;ko&quot;:&quot;운영체제&quot;,&quot;en&quot;:&quot;Operating Systems&quot;}">운영체제</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/운영체제/linux"><span data-i18n-labels="{&quot;ko&quot;:&quot;Linux&quot;,&quot;en&quot;:&quot;Linux&quot;}">Linux</span><small>9</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Developer Tools&quot;}">개발 도구</span><small class="category-count">5</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/개발-도구"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Developer Tools&quot;}">개발 도구</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/개발-도구/git"><span data-i18n-labels="{&quot;ko&quot;:&quot;Git&quot;,&quot;en&quot;:&quot;Git&quot;}">Git</span><small>2</small></a><a class="category-leaf" href="/category/인프라/개발-도구/eclipse"><span data-i18n-labels="{&quot;ko&quot;:&quot;Eclipse&quot;,&quot;en&quot;:&quot;Eclipse&quot;}">Eclipse</span><small>1</small></a><a class="category-leaf" href="/category/인프라/개발-도구/markdown"><span data-i18n-labels="{&quot;ko&quot;:&quot;Markdown&quot;,&quot;en&quot;:&quot;Markdown&quot;}">Markdown</span><small>1</small></a><a class="category-leaf" href="/category/인프라/개발-도구/참고-자료"><span data-i18n-labels="{&quot;ko&quot;:&quot;참고 자료&quot;,&quot;en&quot;:&quot;References&quot;}">참고 자료</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;네트워크&quot;,&quot;en&quot;:&quot;Networking&quot;}">네트워크</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/네트워크"><span data-i18n-labels="{&quot;ko&quot;:&quot;네트워크&quot;,&quot;en&quot;:&quot;Networking&quot;}">네트워크</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/네트워크/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 서버&quot;,&quot;en&quot;:&quot;Web Servers&quot;}">웹 서버</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/웹-서버"><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 서버&quot;,&quot;en&quot;:&quot;Web Servers&quot;}">웹 서버</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/웹-서버/nginx"><span data-i18n-labels="{&quot;ko&quot;:&quot;Nginx&quot;,&quot;en&quot;:&quot;Nginx&quot;}">Nginx</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;자동화&quot;,&quot;en&quot;:&quot;Automation&quot;}">자동화</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/자동화"><span data-i18n-labels="{&quot;ko&quot;:&quot;자동화&quot;,&quot;en&quot;:&quot;Automation&quot;}">자동화</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/자동화/terraform"><span data-i18n-labels="{&quot;ko&quot;:&quot;Terraform&quot;,&quot;en&quot;:&quot;Terraform&quot;}">Terraform</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터&quot;,&quot;en&quot;:&quot;Data&quot;}">데이터</span><small class="category-count">31</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터&quot;,&quot;en&quot;:&quot;Data&quot;}">데이터</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;메시징&quot;,&quot;en&quot;:&quot;Messaging&quot;}">메시징</span><small class="category-count">16</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/메시징"><span data-i18n-labels="{&quot;ko&quot;:&quot;메시징&quot;,&quot;en&quot;:&quot;Messaging&quot;}">메시징</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/메시징/kafka"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kafka&quot;,&quot;en&quot;:&quot;Kafka&quot;}">Kafka</span><small>13</small></a><a class="category-leaf" href="/category/데이터/메시징/rabbitmq"><span data-i18n-labels="{&quot;ko&quot;:&quot;RabbitMQ&quot;,&quot;en&quot;:&quot;RabbitMQ&quot;}">RabbitMQ</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터베이스&quot;,&quot;en&quot;:&quot;Databases&quot;}">데이터베이스</span><small class="category-count">11</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/데이터베이스"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터베이스&quot;,&quot;en&quot;:&quot;Databases&quot;}">데이터베이스</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/데이터베이스/sql"><span data-i18n-labels="{&quot;ko&quot;:&quot;SQL&quot;,&quot;en&quot;:&quot;SQL&quot;}">SQL</span><small>4</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/mariadb"><span data-i18n-labels="{&quot;ko&quot;:&quot;MariaDB&quot;,&quot;en&quot;:&quot;MariaDB&quot;}">MariaDB</span><small>2</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/mongodb"><span data-i18n-labels="{&quot;ko&quot;:&quot;MongoDB&quot;,&quot;en&quot;:&quot;MongoDB&quot;}">MongoDB</span><small>2</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/oracle"><span data-i18n-labels="{&quot;ko&quot;:&quot;Oracle&quot;,&quot;en&quot;:&quot;Oracle&quot;}">Oracle</span><small>1</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/sql-server"><span data-i18n-labels="{&quot;ko&quot;:&quot;SQL Server&quot;,&quot;en&quot;:&quot;SQL Server&quot;}">SQL Server</span><small>1</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Schema Design&quot;}">설계</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;분산 처리&quot;,&quot;en&quot;:&quot;Distributed Processing&quot;}">분산 처리</span><small class="category-count">2</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/분산-처리"><span data-i18n-labels="{&quot;ko&quot;:&quot;분산 처리&quot;,&quot;en&quot;:&quot;Distributed Processing&quot;}">분산 처리</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/분산-처리/spark"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spark&quot;,&quot;en&quot;:&quot;Spark&quot;}">Spark</span><small>1</small></a><a class="category-leaf" href="/category/데이터/분산-처리/storm"><span data-i18n-labels="{&quot;ko&quot;:&quot;Storm&quot;,&quot;en&quot;:&quot;Storm&quot;}">Storm</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;검색&quot;,&quot;en&quot;:&quot;Search&quot;}">검색</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/검색"><span data-i18n-labels="{&quot;ko&quot;:&quot;검색&quot;,&quot;en&quot;:&quot;Search&quot;}">검색</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/검색/elasticsearch"><span data-i18n-labels="{&quot;ko&quot;:&quot;Elasticsearch&quot;,&quot;en&quot;:&quot;Elasticsearch&quot;}">Elasticsearch</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터 과학&quot;,&quot;en&quot;:&quot;Data Science&quot;}">데이터 과학</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/데이터-과학"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터 과학&quot;,&quot;en&quot;:&quot;Data Science&quot;}">데이터 과학</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/데이터-과학/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;소프트웨어 공학&quot;,&quot;en&quot;:&quot;Software Engineering&quot;}">소프트웨어 공학</span><small class="category-count">18</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학"><span data-i18n-labels="{&quot;ko&quot;:&quot;소프트웨어 공학&quot;,&quot;en&quot;:&quot;Software Engineering&quot;}">소프트웨어 공학</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Design&quot;}">설계</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Design&quot;}">설계</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/디자인-패턴"><span data-i18n-labels="{&quot;ko&quot;:&quot;디자인 패턴&quot;,&quot;en&quot;:&quot;Design Patterns&quot;}">디자인 패턴</span><small>6</small></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/도메인-주도-설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;도메인 주도 설계&quot;,&quot;en&quot;:&quot;Domain-Driven Design&quot;}">도메인 주도 설계</span><small>4</small></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/객체지향"><span data-i18n-labels="{&quot;ko&quot;:&quot;객체지향&quot;,&quot;en&quot;:&quot;Object-Oriented Programming&quot;}">객체지향</span><small>2</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;코드 품질&quot;,&quot;en&quot;:&quot;Code Quality&quot;}">코드 품질</span><small class="category-count">3</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/코드-품질"><span data-i18n-labels="{&quot;ko&quot;:&quot;코드 품질&quot;,&quot;en&quot;:&quot;Code Quality&quot;}">코드 품질</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/코드-품질/리팩터링"><span data-i18n-labels="{&quot;ko&quot;:&quot;리팩터링&quot;,&quot;en&quot;:&quot;Refactoring&quot;}">리팩터링</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;보안&quot;,&quot;en&quot;:&quot;Security&quot;}">보안</span><small class="category-count">2</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/보안"><span data-i18n-labels="{&quot;ko&quot;:&quot;보안&quot;,&quot;en&quot;:&quot;Security&quot;}">보안</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/보안/oauth"><span data-i18n-labels="{&quot;ko&quot;:&quot;OAuth&quot;,&quot;en&quot;:&quot;OAuth&quot;}">OAuth</span><small>2</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;학습 자료&quot;,&quot;en&quot;:&quot;Learning Resources&quot;}">학습 자료</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/학습-자료"><span data-i18n-labels="{&quot;ko&quot;:&quot;학습 자료&quot;,&quot;en&quot;:&quot;Learning Resources&quot;}">학습 자료</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/학습-자료/목차"><span data-i18n-labels="{&quot;ko&quot;:&quot;목차&quot;,&quot;en&quot;:&quot;Index&quot;}">목차</span><small>1</small></a></div></details></div></details></div></details><a href="/about" data-i18n="nav.about">소개</a><div class="mobile-tools"><nav class="social-links" aria-label="소셜 링크"><a class="social-link social-github" href="https://github.com/pscheol" aria-label="GitHub" title="GitHub" rel="me noopener" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 21c-5 1-5-3-7-3m14 4v-4a3.5 3.5 0 0 0-1-2.7c3-.3 6-1.5 6-6.7a5 5 0 0 0-1.4-3.5A4.6 4.6 0 0 0 19.5 1S18.3.7 16 2.5a13 13 0 0 0-7 0C6.7.7 5.5 1 5.5 1a4.6 4.6 0 0 0-.1 4.1A5 5 0 0 0 4 8.6c0 5.2 3 6.4 6 6.7A3.5 3.5 0 0 0 9 18v4"/></svg></a><a class="social-link social-linkedin" href="https://www.linkedin.com/in/pscheol" aria-label="LinkedIn" title="LinkedIn" rel="me noopener" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7m0-10v.01M11 17v-7m0 3a3 3 0 0 1 6 0v4"/></svg></a><a class="social-link social-rss" href="/rss.xml" aria-label="RSS" title="RSS" rel="me noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4a15 15 0 0 1 15 15M5 10a9 9 0 0 1 9 9"/><circle cx="6" cy="18" r="1"/></svg></a><a class="social-link social-email" href="mailto:pscheol@gmail.com" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></a></nav><button class="icon-btn square" data-theme-toggle type="button" aria-label="Dark 테마로 전환" aria-pressed="false"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 019.8 3.5a8.5 8.5 0 1010.7 10.7z"></path></svg><svg class="theme-icon theme-icon-sun" hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3l1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3l1.42-1.42"></path></svg></button><div class="lang-switch" data-lang-switch data-astro-cid-34uxj53s><button class="icon-btn square lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="언어" data-i18n-attr="aria-label:lang.label" data-astro-cid-34uxj53s><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-astro-cid-34uxj53s><circle cx="12" cy="12" r="9" data-astro-cid-34uxj53s></circle><path d="M3 12h18" data-astro-cid-34uxj53s></path><path d="M12 3a15 15 0 0 1 4 9 15 15 0 0 1-4 9 15 15 0 0 1-4-9 15 15 0 0 1 4-9z" data-astro-cid-34uxj53s></path></svg></button><ul class="lang-menu" role="listbox" aria-label="언어" data-i18n-attr="aria-label:lang.label" data-astro-cid-34uxj53s><li role="presentation" data-astro-cid-34uxj53s><button type="button" class="lang-option" role="option" data-lang-option="ko" aria-selected="true" lang="ko" data-astro-cid-34uxj53s><span data-astro-cid-34uxj53s>한국어</span><svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true" data-astro-cid-34uxj53s><path d="m5 12 5 5 9-11" data-astro-cid-34uxj53s></path></svg></button></li><li role="presentation" data-astro-cid-34uxj53s><button type="button" class="lang-option" role="option" data-lang-option="en" aria-selected="false" lang="en" data-astro-cid-34uxj53s><span data-astro-cid-34uxj53s>English</span><svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true" data-astro-cid-34uxj53s><path d="m5 12 5 5 9-11" data-astro-cid-34uxj53s></path></svg></button></li></ul></div></div></div></div><aside class="site-sidebar" aria-label="주 메뉴" data-i18n-attr="aria-label:nav.aria"><div class="sidebar-scroll"><a class="brand sidebar-brand" href="/">거꾸로 바라본 세상</a><div class="sidebar-profile"><img class="sidebar-avatar" src="/profile-placeholder.svg" alt="SeungCheol Paik" width="112" height="112"><div class="sidebar-identity"><strong>SeungCheol Paik</strong><p>Back-end Engineer</p></div></div><p class="sidebar-intro">배운 것을 남기고,
+좋아하는 것을 기록합니다.
+</p><nav class="social-links" aria-label="소셜 링크"><a class="social-link social-github" href="https://github.com/pscheol" aria-label="GitHub" title="GitHub" rel="me noopener" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 21c-5 1-5-3-7-3m14 4v-4a3.5 3.5 0 0 0-1-2.7c3-.3 6-1.5 6-6.7a5 5 0 0 0-1.4-3.5A4.6 4.6 0 0 0 19.5 1S18.3.7 16 2.5a13 13 0 0 0-7 0C6.7.7 5.5 1 5.5 1a4.6 4.6 0 0 0-.1 4.1A5 5 0 0 0 4 8.6c0 5.2 3 6.4 6 6.7A3.5 3.5 0 0 0 9 18v4"/></svg></a><a class="social-link social-linkedin" href="https://www.linkedin.com/in/pscheol" aria-label="LinkedIn" title="LinkedIn" rel="me noopener" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7m0-10v.01M11 17v-7m0 3a3 3 0 0 1 6 0v4"/></svg></a><a class="social-link social-rss" href="/rss.xml" aria-label="RSS" title="RSS" rel="me noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4a15 15 0 0 1 15 15M5 10a9 9 0 0 1 9 9"/><circle cx="6" cy="18" r="1"/></svg></a><a class="social-link social-email" href="mailto:pscheol@gmail.com" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></a></nav><button class="sidebar-search" data-search-open type="button" aria-haspopup="dialog" aria-controls="searchOverlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><span data-i18n="sidebar.search">기록 검색</span><kbd aria-hidden="true">⌘ K</kbd></button><nav class="sidebar-nav" aria-label="카테고리" data-i18n-attr="aria-label:sidebar.categories"><a class="sidebar-nav-link" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg><span data-i18n="sidebar.allPosts">전체 글</span><small>297</small></a><div class="sidebar-label" data-i18n="sidebar.categories">카테고리</div><div class="category-tree" id="categoryTree"><details class="sidebar-section" open style="--section-accent:#1854a8"><summary><svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-14-2 18"></path></svg><span data-i18n-labels="{&quot;ko&quot;:&quot;기술&quot;,&quot;en&quot;:&quot;Tech&quot;}">기술</span><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;프로그래밍&quot;,&quot;en&quot;:&quot;Programming&quot;}">프로그래밍</span><small class="category-count">68</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍"><span data-i18n-labels="{&quot;ko&quot;:&quot;프로그래밍&quot;,&quot;en&quot;:&quot;Programming&quot;}">프로그래밍</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;비동기&quot;,&quot;en&quot;:&quot;Asynchronous Programming&quot;}">비동기</span><small class="category-count">24</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/비동기"><span data-i18n-labels="{&quot;ko&quot;:&quot;비동기&quot;,&quot;en&quot;:&quot;Asynchronous Programming&quot;}">비동기</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/비동기/리액티브-프로그래밍"><span data-i18n-labels="{&quot;ko&quot;:&quot;리액티브 프로그래밍&quot;,&quot;en&quot;:&quot;Reactive Programming&quot;}">리액티브 프로그래밍</span><small>24</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;Java&quot;,&quot;en&quot;:&quot;Java&quot;}">Java</span><small class="category-count">23</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/java"><span data-i18n-labels="{&quot;ko&quot;:&quot;Java&quot;,&quot;en&quot;:&quot;Java&quot;}">Java</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/java/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Basics&quot;}">기초</span><small>11</small></a><a class="category-leaf" href="/category/프로그래밍/java/입출력과-네트워크"><span data-i18n-labels="{&quot;ko&quot;:&quot;입출력과 네트워크&quot;,&quot;en&quot;:&quot;I/O and Networking&quot;}">입출력과 네트워크</span><small>7</small></a><a class="category-leaf" href="/category/프로그래밍/java/동시성"><span data-i18n-labels="{&quot;ko&quot;:&quot;동시성&quot;,&quot;en&quot;:&quot;Concurrency&quot;}">동시성</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaScript&quot;,&quot;en&quot;:&quot;JavaScript&quot;}">JavaScript</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/javascript"><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaScript&quot;,&quot;en&quot;:&quot;JavaScript&quot;}">JavaScript</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/javascript/언어-기능"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 기능&quot;,&quot;en&quot;:&quot;Language Features&quot;}">언어 기능</span><small>12</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;Kotlin&quot;,&quot;en&quot;:&quot;Kotlin&quot;}">Kotlin</span><small class="category-count">4</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/kotlin"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kotlin&quot;,&quot;en&quot;:&quot;Kotlin&quot;}">Kotlin</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/kotlin/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Basics&quot;}">기초</span><small>4</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;TypeScript&quot;,&quot;en&quot;:&quot;TypeScript&quot;}">TypeScript</span><small class="category-count">4</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/typescript"><span data-i18n-labels="{&quot;ko&quot;:&quot;TypeScript&quot;,&quot;en&quot;:&quot;TypeScript&quot;}">TypeScript</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/typescript/언어-기능"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 기능&quot;,&quot;en&quot;:&quot;Language Features&quot;}">언어 기능</span><small>4</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;GUI&quot;,&quot;en&quot;:&quot;GUI&quot;}">GUI</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/프로그래밍/gui"><span data-i18n-labels="{&quot;ko&quot;:&quot;GUI&quot;,&quot;en&quot;:&quot;GUI&quot;}">GUI</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/프로그래밍/gui/javafx"><span data-i18n-labels="{&quot;ko&quot;:&quot;JavaFX&quot;,&quot;en&quot;:&quot;JavaFX&quot;}">JavaFX</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;컴퓨터 과학&quot;,&quot;en&quot;:&quot;Computer Science&quot;}">컴퓨터 과학</span><small class="category-count">63</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/컴퓨터-과학"><span data-i18n-labels="{&quot;ko&quot;:&quot;컴퓨터 과학&quot;,&quot;en&quot;:&quot;Computer Science&quot;}">컴퓨터 과학</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;알고리즘&quot;,&quot;en&quot;:&quot;Algorithms&quot;}">알고리즘</span><small class="category-count">63</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/컴퓨터-과학/알고리즘"><span data-i18n-labels="{&quot;ko&quot;:&quot;알고리즘&quot;,&quot;en&quot;:&quot;Algorithms&quot;}">알고리즘</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/코딩-테스트"><span data-i18n-labels="{&quot;ko&quot;:&quot;코딩 테스트&quot;,&quot;en&quot;:&quot;Coding Tests&quot;}">코딩 테스트</span><small>44</small></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/이론"><span data-i18n-labels="{&quot;ko&quot;:&quot;이론&quot;,&quot;en&quot;:&quot;Theory&quot;}">이론</span><small>10</small></a><a class="category-leaf" href="/category/컴퓨터-과학/알고리즘/자료구조"><span data-i18n-labels="{&quot;ko&quot;:&quot;자료구조&quot;,&quot;en&quot;:&quot;Data Structures&quot;}">자료구조</span><small>9</small></a></div></details></div></details><details class="category-node depth-1" open><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;AI&quot;,&quot;en&quot;:&quot;AI&quot;}">AI</span><small class="category-count">48</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai"><span data-i18n-labels="{&quot;ko&quot;:&quot;AI&quot;,&quot;en&quot;:&quot;AI&quot;}">AI</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 모델&quot;,&quot;en&quot;:&quot;Language Models&quot;}">언어 모델</span><small class="category-count">28</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/언어-모델"><span data-i18n-labels="{&quot;ko&quot;:&quot;언어 모델&quot;,&quot;en&quot;:&quot;Language Models&quot;}">언어 모델</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/언어-모델/응용"><span data-i18n-labels="{&quot;ko&quot;:&quot;응용&quot;,&quot;en&quot;:&quot;Applications&quot;}">응용</span><small>16</small></a><a class="category-leaf" href="/category/ai/언어-모델/개념"><span data-i18n-labels="{&quot;ko&quot;:&quot;개념&quot;,&quot;en&quot;:&quot;Concepts&quot;}">개념</span><small>12</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Development Tools&quot;}">개발 도구</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/개발-도구"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Development Tools&quot;}">개발 도구</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/개발-도구/langchain"><span data-i18n-labels="{&quot;ko&quot;:&quot;LangChain&quot;,&quot;en&quot;:&quot;LangChain&quot;}">LangChain</span><small>11</small></a><a class="category-leaf" href="/category/ai/개발-도구/spring-ai"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring AI&quot;,&quot;en&quot;:&quot;Spring AI&quot;}">Spring AI</span><small>1</small></a></div></details><details class="category-node depth-2" open><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 방법&quot;,&quot;en&quot;:&quot;Development Methods&quot;}">개발 방법</span><small class="category-count">5</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/개발-방법"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 방법&quot;,&quot;en&quot;:&quot;Development Methods&quot;}">개발 방법</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf active" href="/category/ai/개발-방법/ai-엔지니어링" aria-current="page"><span data-i18n-labels="{&quot;ko&quot;:&quot;AI 엔지니어링&quot;,&quot;en&quot;:&quot;AI Engineering&quot;}">AI 엔지니어링</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;머신러닝&quot;,&quot;en&quot;:&quot;Machine Learning&quot;}">머신러닝</span><small class="category-count">3</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/ai/머신러닝"><span data-i18n-labels="{&quot;ko&quot;:&quot;머신러닝&quot;,&quot;en&quot;:&quot;Machine Learning&quot;}">머신러닝</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/ai/머신러닝/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>3</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 개발&quot;,&quot;en&quot;:&quot;Web Development&quot;}">웹 개발</span><small class="category-count">36</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발"><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 개발&quot;,&quot;en&quot;:&quot;Web Development&quot;}">웹 개발</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;백엔드&quot;,&quot;en&quot;:&quot;Backend&quot;}">백엔드</span><small class="category-count">24</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/백엔드"><span data-i18n-labels="{&quot;ko&quot;:&quot;백엔드&quot;,&quot;en&quot;:&quot;Backend&quot;}">백엔드</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring&quot;,&quot;en&quot;:&quot;Spring&quot;}">Spring</span><small>8</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/netty"><span data-i18n-labels="{&quot;ko&quot;:&quot;Netty&quot;,&quot;en&quot;:&quot;Netty&quot;}">Netty</span><small>5</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring-webflux"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring WebFlux&quot;,&quot;en&quot;:&quot;Spring WebFlux&quot;}">Spring WebFlux</span><small>5</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/jpa"><span data-i18n-labels="{&quot;ko&quot;:&quot;JPA&quot;,&quot;en&quot;:&quot;JPA&quot;}">JPA</span><small>4</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/mybatis"><span data-i18n-labels="{&quot;ko&quot;:&quot;MyBatis&quot;,&quot;en&quot;:&quot;MyBatis&quot;}">MyBatis</span><small>1</small></a><a class="category-leaf" href="/category/웹-개발/백엔드/spring-cloud"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spring Cloud&quot;,&quot;en&quot;:&quot;Spring Cloud&quot;}">Spring Cloud</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;프론트엔드&quot;,&quot;en&quot;:&quot;Frontend&quot;}">프론트엔드</span><small class="category-count">11</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/프론트엔드"><span data-i18n-labels="{&quot;ko&quot;:&quot;프론트엔드&quot;,&quot;en&quot;:&quot;Frontend&quot;}">프론트엔드</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/프론트엔드/vue"><span data-i18n-labels="{&quot;ko&quot;:&quot;Vue&quot;,&quot;en&quot;:&quot;Vue&quot;}">Vue</span><small>8</small></a><a class="category-leaf" href="/category/웹-개발/프론트엔드/jsp"><span data-i18n-labels="{&quot;ko&quot;:&quot;JSP&quot;,&quot;en&quot;:&quot;JSP&quot;}">JSP</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;API&quot;,&quot;en&quot;:&quot;API&quot;}">API</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/웹-개발/api"><span data-i18n-labels="{&quot;ko&quot;:&quot;API&quot;,&quot;en&quot;:&quot;API&quot;}">API</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/웹-개발/api/grpc"><span data-i18n-labels="{&quot;ko&quot;:&quot;gRPC&quot;,&quot;en&quot;:&quot;gRPC&quot;}">gRPC</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;인프라&quot;,&quot;en&quot;:&quot;Infrastructure&quot;}">인프라</span><small class="category-count">33</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라"><span data-i18n-labels="{&quot;ko&quot;:&quot;인프라&quot;,&quot;en&quot;:&quot;Infrastructure&quot;}">인프라</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;컨테이너&quot;,&quot;en&quot;:&quot;Containers&quot;}">컨테이너</span><small class="category-count">16</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/컨테이너"><span data-i18n-labels="{&quot;ko&quot;:&quot;컨테이너&quot;,&quot;en&quot;:&quot;Containers&quot;}">컨테이너</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/컨테이너/docker"><span data-i18n-labels="{&quot;ko&quot;:&quot;Docker&quot;,&quot;en&quot;:&quot;Docker&quot;}">Docker</span><small>11</small></a><a class="category-leaf" href="/category/인프라/컨테이너/kubernetes"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kubernetes&quot;,&quot;en&quot;:&quot;Kubernetes&quot;}">Kubernetes</span><small>5</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;운영체제&quot;,&quot;en&quot;:&quot;Operating Systems&quot;}">운영체제</span><small class="category-count">9</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/운영체제"><span data-i18n-labels="{&quot;ko&quot;:&quot;운영체제&quot;,&quot;en&quot;:&quot;Operating Systems&quot;}">운영체제</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/운영체제/linux"><span data-i18n-labels="{&quot;ko&quot;:&quot;Linux&quot;,&quot;en&quot;:&quot;Linux&quot;}">Linux</span><small>9</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Developer Tools&quot;}">개발 도구</span><small class="category-count">5</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/개발-도구"><span data-i18n-labels="{&quot;ko&quot;:&quot;개발 도구&quot;,&quot;en&quot;:&quot;Developer Tools&quot;}">개발 도구</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/개발-도구/git"><span data-i18n-labels="{&quot;ko&quot;:&quot;Git&quot;,&quot;en&quot;:&quot;Git&quot;}">Git</span><small>2</small></a><a class="category-leaf" href="/category/인프라/개발-도구/eclipse"><span data-i18n-labels="{&quot;ko&quot;:&quot;Eclipse&quot;,&quot;en&quot;:&quot;Eclipse&quot;}">Eclipse</span><small>1</small></a><a class="category-leaf" href="/category/인프라/개발-도구/markdown"><span data-i18n-labels="{&quot;ko&quot;:&quot;Markdown&quot;,&quot;en&quot;:&quot;Markdown&quot;}">Markdown</span><small>1</small></a><a class="category-leaf" href="/category/인프라/개발-도구/참고-자료"><span data-i18n-labels="{&quot;ko&quot;:&quot;참고 자료&quot;,&quot;en&quot;:&quot;References&quot;}">참고 자료</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;네트워크&quot;,&quot;en&quot;:&quot;Networking&quot;}">네트워크</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/네트워크"><span data-i18n-labels="{&quot;ko&quot;:&quot;네트워크&quot;,&quot;en&quot;:&quot;Networking&quot;}">네트워크</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/네트워크/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 서버&quot;,&quot;en&quot;:&quot;Web Servers&quot;}">웹 서버</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/웹-서버"><span data-i18n-labels="{&quot;ko&quot;:&quot;웹 서버&quot;,&quot;en&quot;:&quot;Web Servers&quot;}">웹 서버</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/웹-서버/nginx"><span data-i18n-labels="{&quot;ko&quot;:&quot;Nginx&quot;,&quot;en&quot;:&quot;Nginx&quot;}">Nginx</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;자동화&quot;,&quot;en&quot;:&quot;Automation&quot;}">자동화</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/인프라/자동화"><span data-i18n-labels="{&quot;ko&quot;:&quot;자동화&quot;,&quot;en&quot;:&quot;Automation&quot;}">자동화</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/인프라/자동화/terraform"><span data-i18n-labels="{&quot;ko&quot;:&quot;Terraform&quot;,&quot;en&quot;:&quot;Terraform&quot;}">Terraform</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터&quot;,&quot;en&quot;:&quot;Data&quot;}">데이터</span><small class="category-count">31</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터&quot;,&quot;en&quot;:&quot;Data&quot;}">데이터</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;메시징&quot;,&quot;en&quot;:&quot;Messaging&quot;}">메시징</span><small class="category-count">16</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/메시징"><span data-i18n-labels="{&quot;ko&quot;:&quot;메시징&quot;,&quot;en&quot;:&quot;Messaging&quot;}">메시징</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/메시징/kafka"><span data-i18n-labels="{&quot;ko&quot;:&quot;Kafka&quot;,&quot;en&quot;:&quot;Kafka&quot;}">Kafka</span><small>13</small></a><a class="category-leaf" href="/category/데이터/메시징/rabbitmq"><span data-i18n-labels="{&quot;ko&quot;:&quot;RabbitMQ&quot;,&quot;en&quot;:&quot;RabbitMQ&quot;}">RabbitMQ</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터베이스&quot;,&quot;en&quot;:&quot;Databases&quot;}">데이터베이스</span><small class="category-count">11</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/데이터베이스"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터베이스&quot;,&quot;en&quot;:&quot;Databases&quot;}">데이터베이스</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/데이터베이스/sql"><span data-i18n-labels="{&quot;ko&quot;:&quot;SQL&quot;,&quot;en&quot;:&quot;SQL&quot;}">SQL</span><small>4</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/mariadb"><span data-i18n-labels="{&quot;ko&quot;:&quot;MariaDB&quot;,&quot;en&quot;:&quot;MariaDB&quot;}">MariaDB</span><small>2</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/mongodb"><span data-i18n-labels="{&quot;ko&quot;:&quot;MongoDB&quot;,&quot;en&quot;:&quot;MongoDB&quot;}">MongoDB</span><small>2</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/oracle"><span data-i18n-labels="{&quot;ko&quot;:&quot;Oracle&quot;,&quot;en&quot;:&quot;Oracle&quot;}">Oracle</span><small>1</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/sql-server"><span data-i18n-labels="{&quot;ko&quot;:&quot;SQL Server&quot;,&quot;en&quot;:&quot;SQL Server&quot;}">SQL Server</span><small>1</small></a><a class="category-leaf" href="/category/데이터/데이터베이스/설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Schema Design&quot;}">설계</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;분산 처리&quot;,&quot;en&quot;:&quot;Distributed Processing&quot;}">분산 처리</span><small class="category-count">2</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/분산-처리"><span data-i18n-labels="{&quot;ko&quot;:&quot;분산 처리&quot;,&quot;en&quot;:&quot;Distributed Processing&quot;}">분산 처리</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/분산-처리/spark"><span data-i18n-labels="{&quot;ko&quot;:&quot;Spark&quot;,&quot;en&quot;:&quot;Spark&quot;}">Spark</span><small>1</small></a><a class="category-leaf" href="/category/데이터/분산-처리/storm"><span data-i18n-labels="{&quot;ko&quot;:&quot;Storm&quot;,&quot;en&quot;:&quot;Storm&quot;}">Storm</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;검색&quot;,&quot;en&quot;:&quot;Search&quot;}">검색</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/검색"><span data-i18n-labels="{&quot;ko&quot;:&quot;검색&quot;,&quot;en&quot;:&quot;Search&quot;}">검색</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/검색/elasticsearch"><span data-i18n-labels="{&quot;ko&quot;:&quot;Elasticsearch&quot;,&quot;en&quot;:&quot;Elasticsearch&quot;}">Elasticsearch</span><small>1</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터 과학&quot;,&quot;en&quot;:&quot;Data Science&quot;}">데이터 과학</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/데이터/데이터-과학"><span data-i18n-labels="{&quot;ko&quot;:&quot;데이터 과학&quot;,&quot;en&quot;:&quot;Data Science&quot;}">데이터 과학</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/데이터/데이터-과학/기초"><span data-i18n-labels="{&quot;ko&quot;:&quot;기초&quot;,&quot;en&quot;:&quot;Fundamentals&quot;}">기초</span><small>1</small></a></div></details></div></details><details class="category-node depth-1"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;소프트웨어 공학&quot;,&quot;en&quot;:&quot;Software Engineering&quot;}">소프트웨어 공학</span><small class="category-count">18</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학"><span data-i18n-labels="{&quot;ko&quot;:&quot;소프트웨어 공학&quot;,&quot;en&quot;:&quot;Software Engineering&quot;}">소프트웨어 공학</span> <span data-i18n="nav.allSuffix">전체</span></a><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Design&quot;}">설계</span><small class="category-count">12</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;설계&quot;,&quot;en&quot;:&quot;Design&quot;}">설계</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/디자인-패턴"><span data-i18n-labels="{&quot;ko&quot;:&quot;디자인 패턴&quot;,&quot;en&quot;:&quot;Design Patterns&quot;}">디자인 패턴</span><small>6</small></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/도메인-주도-설계"><span data-i18n-labels="{&quot;ko&quot;:&quot;도메인 주도 설계&quot;,&quot;en&quot;:&quot;Domain-Driven Design&quot;}">도메인 주도 설계</span><small>4</small></a><a class="category-leaf" href="/category/소프트웨어-공학/설계/객체지향"><span data-i18n-labels="{&quot;ko&quot;:&quot;객체지향&quot;,&quot;en&quot;:&quot;Object-Oriented Programming&quot;}">객체지향</span><small>2</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;코드 품질&quot;,&quot;en&quot;:&quot;Code Quality&quot;}">코드 품질</span><small class="category-count">3</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/코드-품질"><span data-i18n-labels="{&quot;ko&quot;:&quot;코드 품질&quot;,&quot;en&quot;:&quot;Code Quality&quot;}">코드 품질</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/코드-품질/리팩터링"><span data-i18n-labels="{&quot;ko&quot;:&quot;리팩터링&quot;,&quot;en&quot;:&quot;Refactoring&quot;}">리팩터링</span><small>3</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;보안&quot;,&quot;en&quot;:&quot;Security&quot;}">보안</span><small class="category-count">2</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/보안"><span data-i18n-labels="{&quot;ko&quot;:&quot;보안&quot;,&quot;en&quot;:&quot;Security&quot;}">보안</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/보안/oauth"><span data-i18n-labels="{&quot;ko&quot;:&quot;OAuth&quot;,&quot;en&quot;:&quot;OAuth&quot;}">OAuth</span><small>2</small></a></div></details><details class="category-node depth-2"><summary><span data-i18n-labels="{&quot;ko&quot;:&quot;학습 자료&quot;,&quot;en&quot;:&quot;Learning Resources&quot;}">학습 자료</span><small class="category-count">1</small><svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary><div class="category-children"><a class="category-all" href="/category/소프트웨어-공학/학습-자료"><span data-i18n-labels="{&quot;ko&quot;:&quot;학습 자료&quot;,&quot;en&quot;:&quot;Learning Resources&quot;}">학습 자료</span> <span data-i18n="nav.allSuffix">전체</span></a><a class="category-leaf" href="/category/소프트웨어-공학/학습-자료/목차"><span data-i18n-labels="{&quot;ko&quot;:&quot;목차&quot;,&quot;en&quot;:&quot;Index&quot;}">목차</span><small>1</small></a></div></details></div></details></div></details></div><a class="sidebar-nav-link sidebar-about" href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21v-2a7 7 0 0 1 14 0v2"></path></svg><span data-i18n="nav.about">소개</span></a></nav><section class="sidebar-tags" aria-labelledby="sidebarTagsTitle"><h2 class="sidebar-label" id="sidebarTagsTitle" data-i18n="sidebar.tags">태그</h2><div class="tag-cloud" id="tagCloud"><a href="/tag/알고리즘">#알고리즘</a><a href="/tag/백준">#백준</a><a href="/tag/baekjoon">#Baekjoon</a><a href="/tag/llm">#LLM</a><a href="/tag/리액티브-프로그래밍">#리액티브 프로그래밍</a><a href="/tag/java">#Java</a><a href="/tag/rxjava">#RxJava</a><a href="/tag/kafka">#Kafka</a></div></section></div><div class="sidebar-bottom"><div class="sidebar-tools"><button class="icon-btn square" data-theme-toggle type="button" aria-label="Dark 테마로 전환" aria-pressed="false"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 019.8 3.5a8.5 8.5 0 1010.7 10.7z"></path></svg><svg class="theme-icon theme-icon-sun" hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3l1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3l1.42-1.42"></path></svg></button><div class="lang-switch" data-lang-switch data-astro-cid-34uxj53s><button class="icon-btn square lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="언어" data-i18n-attr="aria-label:lang.label" data-astro-cid-34uxj53s><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" data-astro-cid-34uxj53s><circle cx="12" cy="12" r="9" data-astro-cid-34uxj53s></circle><path d="M3 12h18" data-astro-cid-34uxj53s></path><path d="M12 3a15 15 0 0 1 4 9 15 15 0 0 1-4 9 15 15 0 0 1-4-9 15 15 0 0 1 4-9z" data-astro-cid-34uxj53s></path></svg></button><ul class="lang-menu" role="listbox" aria-label="언어" data-i18n-attr="aria-label:lang.label" data-astro-cid-34uxj53s><li role="presentation" data-astro-cid-34uxj53s><button type="button" class="lang-option" role="option" data-lang-option="ko" aria-selected="true" lang="ko" data-astro-cid-34uxj53s><span data-astro-cid-34uxj53s>한국어</span><svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true" data-astro-cid-34uxj53s><path d="m5 12 5 5 9-11" data-astro-cid-34uxj53s></path></svg></button></li><li role="presentation" data-astro-cid-34uxj53s><button type="button" class="lang-option" role="option" data-lang-option="en" aria-selected="false" lang="en" data-astro-cid-34uxj53s><span data-astro-cid-34uxj53s>English</span><svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true" data-astro-cid-34uxj53s><path d="m5 12 5 5 9-11" data-astro-cid-34uxj53s></path></svg></button></li></ul></div></div><small>© 2026 SeungCheol Paik</small></div></aside><div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="글 검색" data-i18n-attr="aria-label:search.dialog"><div class="search-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="searchInput" type="search" placeholder="제목·내용·태그로 검색" autocomplete="off" data-i18n-attr="placeholder:search.placeholder"><button class="search-close" id="searchClose" type="button" aria-label="닫기" data-i18n-attr="aria-label:search.close">×</button></div><div class="search-results" id="searchResults"></div></div><div class="site-content" id="site-content" tabindex="-1"><nav class="shell-topbar" aria-label="현재 위치" data-i18n-attr="aria-label:shell.breadcrumb"><a href="/">거꾸로 바라본 세상</a><span aria-hidden="true">/</span><span class="shell-current" aria-current="page">3. Harness Engineering(하네스 엔지니어링) — AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술</span></nav><div class="post-shell"><header class="post-hero"><a class="back" href="/">← <span data-i18n="post.back">목록으로</span></a><span class="art-cat" style="--section-accent:#1854a8"><span class="dot tech"></span>AI › 개발 방법 › AI 엔지니어링</span><h1 class="art-title">3. Harness Engineering(하네스 엔지니어링) — AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술</h1><div class="art-meta"><div class="art-byline"><div class="av">P</div><div><div class="who">SeungCheol Paik</div><div class="sub">2026.04.08 · <span data-read="17" data-read-mode="full">17분 읽기</span></div></div></div><div class="reading-tools" role="toolbar" aria-label="읽기 도구"><div class="rt-group" role="group" aria-label="본문 글자 크기"><button type="button" class="rt-btn" data-reading="dec" aria-label="글자 작게"><span class="rt-a-sm">A</span>−</button><button type="button" class="rt-btn" data-reading="inc" aria-label="글자 크게"><span class="rt-a-lg">A</span>＋</button></div><button type="button" class="rt-btn" data-reading="width" aria-pressed="false" aria-label="읽기 너비 넓게/좁게 전환"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 7-5 5 5 5"></path><path d="m15 7 5 5-5 5"></path><path d="M4 12h16"></path></svg><span>넓게</span></button><button type="button" class="rt-btn" data-reading="print" aria-label="PDF 로 내보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8" rx="1"></rect></svg><span>PDF</span></button></div></div></header><div class="post-body"><main class="article"><details class="inline-toc" open><summary data-i18n="post.toc">목차</summary><nav class="toc-tree" aria-label="모바일 목차"><ul><li><a href="#하네스-엔지니어링harness-engineering">하네스 엔지니어링(Harness Engineering)</a><ul><li><a href="#ai가-실수를-못하게-하기-위해-규칙과-울타리를-설계하는-기술--제어의-기술" class="level-2">AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술 — 제어의 기술</a><ul><li><a href="#말을-비유로-이해" class="level-3">[말을 비유로 이해]</a></li></ul></li><li><a href="#ai에게-잘-일할-수-있는-환경을-설계하는-것---팀원처럼-위임하는-방식" class="level-2">AI에게 잘 일할 수 있는 환경을 설계하는 것 - [팀원처럼 위임하는 방식]</a></li><li><a href="#하네스의-역할" class="level-2">하네스의 역할</a></li><li><a href="#하네스-엔지니어링의-4가지-구성-요소" class="level-2">하네스 엔지니어링의 4가지 구성 요소</a><ul><li><a href="#ai---새로-들어온-팀원" class="level-3">AI - 새로 들어온 팀원</a></li><li><a href="#1-규칙-헌법-가드레일rule-constitution-guardrails--의도를-잘-전달하기-위해-규칙을-적어놓은-문서소통" class="level-3">1. 규칙, 헌법, 가드레일(Rule, Constitution, Guardrails) -- 의도를 잘 전달하기 위해 규칙을 적어놓은 문서(소통)</a></li><li><a href="#2-아키텍처-제약-조건-및-스캐폴딩architectural-constraints--scaffolding--어떤-정보를-참조하게-할-것인가지식" class="level-3">2. 아키텍처 제약 조건 및 스캐폴딩(Architectural Constraints &amp; Scaffolding) — 어떤 정보를 참조하게 할 것인가(지식)</a></li><li><a href="#3-검증-및-피드백-루프-verification--feedback-loops--hooks--어떤-구조와-제약-속에서-움직이게-할-것인가규칙" class="level-3">3. 검증 및 피드백 루프 (Verification &amp; Feedback Loops / Hooks) — 어떤 구조와 제약 속에서 움직이게 할 것인가(규칙)</a></li><li><a href="#4-엔트로피-관리-및-가비지-컬렉션-entropy-management--garbage-collection--결과물을-어떻게-신뢰할-것인가품질" class="level-3">4. 엔트로피 관리 및 가비지 컬렉션 (Entropy Management / Garbage Collection) — 결과물을 어떻게 신뢰할 것인가(품질)</a></li></ul></li><li><a href="#에이전트의-위임-범위" class="level-2">에이전트의 위임 범위</a></li><li><a href="#4대-축의-상호작용-the-synergy" class="level-2">4대 축의 상호작용 (The Synergy)</a><ul><li><a href="#개발자-역할의-진화" class="level-3">개발자 역할의 진화</a></li></ul></li></ul></li><li><a href="#하네스-엔지니어링의-두-단계의-역할">하네스 엔지니어링의 두 단계의 역할</a><ul><li><a href="#repository-하네스" class="level-2">Repository 하네스</a></li><li><a href="#application-하네스" class="level-2">Application 하네스</a></li><li><a href="#구조분석" class="level-2">구조분석</a><ul><li><a href="#에이전트-제어-레이어" class="level-3">에이전트 제어 레이어</a></li><li><a href="#의사결정-문서-레이어-docs" class="level-3">의사결정 문서 레이어 (docs/)</a></li><li><a href="#품질-기준-레이어" class="level-3">품질 기준 레이어</a></li></ul></li><li><a href="#하나의-작업에-하네스를-적용해-보기" class="level-2">하나의 작업에 하네스를 적용해 보기</a><ul><li><a href="#도구-요청을-코드로-제한" class="level-3">도구 요청을 코드로 제한</a></li><li><a href="#실패를-다음-개선으로-돌리는-방식" class="level-3">실패를 다음 개선으로 돌리는 방식</a></li></ul></li><li><a href="#이어서-읽기" class="level-2">이어서 읽기</a></li></ul></li></ul></nav></details><div class="prose"><h1 id="하네스-엔지니어링harness-engineering">하네스 엔지니어링(Harness Engineering)</h1>
+<h2 id="ai가-실수를-못하게-하기-위해-규칙과-울타리를-설계하는-기술--제어의-기술">AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술 — 제어의 기술</h2>
+<ul>
+<li>
+<p><strong>하네스(Harness)</strong>는 원래 말에 채우는 마구(馬具)에서 유래한 단어로, AI 맥락에서는 AI 모델을 안전하고 제어 가능하게 “장착”하는 구조적 틀을 의미</p>
+</li>
+<li>
+<p>강력한 것을 제어하여 유익하게 활용한다는 의미로 쓰이며, AI에서는 올바른 방향으로 제어하면서 최대한 활용하기 위한 구조를 일컫는 표현</p>
+</li>
+</ul>
+<h3 id="말을-비유로-이해">[말을 비유로 이해]</h3>
+<p>AI 에이전트를 거대한 짐말(draft horse)이라고 생각</p>
+<ul>
+<li>
+<p><strong>에이전틱 엔지니어링 = 말 훈련</strong></p>
+<ul>
+<li>추론 루프 설계, 멀티 에이전트 조율, 도구 사용법 교육 → 말 자체를 더 강하게 만드는 것</li>
+</ul>
+</li>
+<li>
+<p><strong>하네스 엔지니어링 = 마구 제작</strong></p>
+<ul>
+<li>가죽 끈, 고삐, 수레를 만드는 것 → 말이 밭을 갈 수 있도록 방향과 한계를 정해주는 장비</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><strong>말을 아무리 잘 훈련시켜도, 마구 없이는 밭을 갈 수 없음</strong></p>
+</blockquote>
+<h4 id="하네스란-ai-에이전트가-가장-안전하고-예측-가능한-방식으로-작동하도록-설계된-제어-구조의-전체"><strong>하네스란 AI 에이전트가 가장 안전하고 예측 가능한 방식으로 작동하도록 설계된 제어 구조의 전체</strong></h4>
+<ul>
+<li>
+<p>AI의 불확실성(환각, 편향 등)을 억제하고 <strong>비즈니스 로직 안에서만 작동</strong>하게 만드는 울타리</p>
+</li>
+<li>
+<p>가드레일(Guardrails) 설정, 출력 형식의 강제(JSON 등), 에러 핸들링, 그리고 결과물이 정확한지 검증하는 <strong>Evals(평가)</strong> 체계 구축</p>
+</li>
+<li>
+<p>아무리 똑똑한 에이전트라도 하네스(안전장치)가 없다면 실제 서비스로 출시하기 어려움</p>
+</li>
+</ul>
+<h2 id="ai에게-잘-일할-수-있는-환경을-설계하는-것---팀원처럼-위임하는-방식"><strong>AI에게 잘 일할 수 있는 환경을 설계하는 것 - [팀원처럼 위임하는 방식]</strong></h2>
+<ul>
+<li>
+<p>규칙, 작업구조를 미리 합의</p>
+</li>
+<li>
+<p>검증 기준을 사전에 정의</p>
+</li>
+<li>
+<p>실행 루프로 반복 개선</p>
+</li>
+<li>
+<p>일관된 고품질 결과물</p>
+</li>
+</ul>
+<h2 id="하네스의-역할">하네스의 역할</h2>
+<p>하네스는 단순히 AI 에이전트를 동작시키는 데 그치지 않고, 3가지 기능을 통합적으로 담당</p>
+<ul>
+<li>
+<p><strong>제어(Control) :</strong> 에이전트가 허용된 범위 밖의 행동을 하지 않도록 제안하는 구조</p>
+</li>
+<li>
+<p><strong>감시(Monitoring) :</strong> 에이전트 동작 상태와 출력 결과를 실시간으로 추적 및 기록하는 구조</p>
+</li>
+<li>
+<p><strong>개선(Feedback) :</strong> 오류나 이상 동작을 감지하고 다음 동작에 반영하는 피드백 루프</p>
+</li>
+</ul>
+<hr>
+<h2 id="하네스-엔지니어링의-4가지-구성-요소">하네스 엔지니어링의 4가지 구성 요소</h2>
+<h3 id="ai---새로-들어온-팀원">AI - 새로 들어온 팀원</h3>
+<blockquote>
+<p>“나는 바쁜 팀장이에요. AI한테 일을 위임하고 싶어요.”</p>
+</blockquote>
+<h3 id="1-규칙-헌법-가드레일rule-constitution-guardrails--의도를-잘-전달하기-위해-규칙을-적어놓은-문서소통"><strong>1. 규칙, 헌법, 가드레일(Rule, Constitution, Guardrails) — 의도를 잘 전달하기 위해 규칙을 적어놓은 문서(소통)</strong></h3>
+<p><strong>[Rule, Constitution] — 우리팀은 이렇게 일해</strong></p>
+<ul>
+<li>
+<p>에이전트가 적시에 적절한 정보(아키텍처 사양, 스타일 가이드, 프로젝트 규칙 등)를 갖도록 보장하는 것으로, 정적 파일(CLAUDE.md, AGENTS.md)을 활용하여 에이전트에게 필요한 컨텍스트를 구조화하여 주입</p>
+</li>
+<li>
+<p><strong>컨텍스트 엔지니어링 (Context Engineering / Structured Context)을 작성</strong></p>
+<ul>
+<li>
+<p>에이전트에게 필요한 정보를 적시에 제공하는 기술. 단, 모든 지침을 하나의 파일에 몰아넣는 것은 지양</p>
+<ul>
+<li><strong>거대한 AGENTS.md 피하기:</strong> 하나의 거대한 지침 파일은 에이전트에게 혼란을 주고, 금방 유지보수가 안 되는 ‘낡은 규칙들의 무덤’이 되버림</li>
+<li><strong>점진적 정보 제공 (Progressive Disclosure):</strong> 메인 지침 파일은 100줄 이내의 ‘<strong>목차</strong>’ 역할만 하도록 유지하고, 상세한 내용은 docs/ 하위 디렉터리에 구조화하여 에이전트가 필요할 때 깊이 탐색하게 만든다.</li>
+<li><strong>단일 진실 공급원 (SSOT):</strong> Slack 스레드나 개발자의 머릿속에 있는 지식은 에이전트에게 존재하지 않는 것과 같으므로, 모든 계획과 설계 내역은 리포지터리 내부에 아티팩트(Artifact)로 저장해야 한다.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[Rule, Constitution] — 우리팀은 이렇게 일해</strong></p>
+<blockquote>
+<p><strong>[예시]</strong> <a href="http://claude.md/">CLAUDE.md</a>에 “새로운 라이브러리를 도입하지 마세요. DB 쿼리는 반드시 ORM을 통해서만 해주세요”라고 작성하면, AI 에이전트는 이 규칙을 <strong>자신의 행동 제약</strong>으로 인식. 매번 프롬프트에 반복할 필요가 없다.</p>
+</blockquote>
+</li>
+<li>
+<p><strong>[Guardrails] — AI가 입력을 받거나 답변을 내보내기 직전에 필터링하는 단계</strong></p>
+<ul>
+<li>Input Guardrail: 유해한 질문, 개인정보 유출 시도(Prompt Injection), 범위를 벗어난 요청을 차단</li>
+<li>Output Guardrail: 모델이 욕설, 편향된 발언, 혹은 기업 비밀을 답변에 포함하는지 실시간으로 감시하고 차단</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-아키텍처-제약-조건-및-스캐폴딩architectural-constraints--scaffolding--어떤-정보를-참조하게-할-것인가지식"><strong>2. 아키텍처 제약 조건 및 스캐폴딩(Architectural Constraints &#x26; Scaffolding) —</strong> 어떤 정보를 참조하게 할 것인가(지식)</h3>
+<p>규칙은 문서로 남기는 것이 아니라, <strong>코드로 강제</strong>해야 한다. 에이전트의 자유도를 제한할수록 오히려 올바른 결과물에 더 빨리 도달한다.</p>
+<ul>
+<li>
+<p><strong>[작업 구조(Task Structure)] - 무엇을 어떻게 만드는지 정의하는 작업 지시서</strong></p>
+<ul>
+<li>이건 꼭 지켜야 해(Linter)</li>
+<li>이건 하면 안돼(제약)</li>
+<li>수정 지침 주입<strong>:</strong> 린터 에러 메시지에 ‘해결 방법’을 포함시켜 작성. 에러 발생 시 에이전트가 메시지를 읽고 즉시 자체 수정할 수 있는 피드백 루프를 형성</li>
+<li>AI에게 “좋은 코드를 짜라”고 말하는 대신, 구조적으로 실수할 수 없는 환경을 만든다.</li>
+<li>화이트리스트 방식을 통해 필요한 최소한의 도구 권한만 부여하거나, 작업 공간을 완전히 격리하여 외부 영향을 차단</li>
+</ul>
+</li>
+<li>
+<p><strong>[출력 검증 및 구조화 (Output Parsing &#x26; Validation)]</strong></p>
+<ul>
+<li>
+<p>AI의 답변이 프로그램이 이해할 수 있는 형태인지 확인하고 강제</p>
+</li>
+<li>
+<p><strong>Schema Enforcement:</strong> 답변이 반드시 정해진 JSON 형식을 따르도록 정의. 형식이 틀리면 에이전트가 스스로 수정하게 하거나 에러 처리</p>
+<ul>
+<li>ex) 반드시 {“status”: “success”, “data”: …} 형식으로 답해줘. 아니면 에러야.</li>
+</ul>
+</li>
+<li>
+<p><strong>Hallucination Check:</strong> 답변 내용이 제공된 컨텍스트(Context)에 실제로 존재하는 내용인지 사실 관계를 교차 검증</p>
+<ul>
+<li>AI가 “A는 B다”라고 답하면, 시스템이 컨텍스트 문서에서 “A”와 “B”의 관계를 재검색하여 일치 여부 확인</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[작업 구조(Task Structure)] - 무엇을 어떻게 만드는지 정의하는 작업 지시서</strong></p>
+<ul>
+<li>이건 꼭 지켜야 해(Linter)</li>
+<li>이건 하면 안돼(제약)</li>
+<li><strong>수정 지침 주입:</strong> 린터 에러 메시지에 ‘해결 방법’을 포함시켜 작성. 에러 발생 시 에이전트가 메시지를 읽고 즉시 자체 수정할 수 있는 피드백 루프를 형성.</li>
+<li>AI에게 “좋은 코드를 짜라”고 말하는 대신, 구조적으로 실수할 수 없는 환경을 만든다.</li>
+<li>화이트리스트 방식을 통해 필요한 최소한의 도구 권한만 부여하거나, 작업 공간을 완전히 격리하여 외부 영향을 차단</li>
+</ul>
+</li>
+<li>
+<p>[출력 검증 및 구조화 (Output Parsing &#x26; Validation)]</p>
+<ul>
+<li>AI의 답변이 프로그램이 이해할 수 있는 형태인지 확인하고 강제</li>
+<li><strong>Schema Enforcement:</strong>
+<ul>
+<li>ex) 반드시 <code>{"status": "success", "data": ...}</code> 형식으로 답해줘. 아니면 에러야.</li>
+</ul>
+</li>
+<li><strong>Hallucination Check:</strong>
+<ul>
+<li>AI가 “A는 B다”라고 답하면, 시스템이 컨텍스트 문서에서 “A”와 “B”의 관계를 재검색하여 일치 여부 확인</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[CI/CD Gate]</strong></p>
+<ul>
+<li>코드 린터, 구조 테스트, pre-commit hook 등을 통해 규칙을 <strong>시스템이 자동으로 강제</strong>
+<ul>
+<li><strong>린터(Linter)</strong> — 코드가 규칙을 어기면 자동으로 에러를 띄움</li>
+<li><strong>구조 테스트</strong> — 의존성 규칙을 테스트로 강제</li>
+<li><strong>Pre-commit Hook</strong> — 코드를 커밋하기 전에 자동으로 검사</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>CI가 실패하면 에이전트가 스스로 수정하고 사람이 개입하지 않음</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="3-검증-및-피드백-루프-verification--feedback-loops--hooks--어떤-구조와-제약-속에서-움직이게-할-것인가규칙"><strong>3. 검증 및 피드백 루프 (Verification &#x26; Feedback Loops / Hooks) — 어떤 구조와 제약 속에서 움직이게 할 것인가(규칙)</strong></h3>
+<p>에이전트가 자신이 작성한 코드를 스스로 평가하게 하면 편향이 발생하므로, AI가 생성한 결과물을 코드로 자동 검증하는 장치이다. 오류가 발생하면 3단계 검사(오류 식별 -> 관련 테스트 실행 -> 자동 수정)를 수행하고, 성공할 때까지 반복하거나 사람에게 보고</p>
+<ul>
+<li>
+<p><strong>[평가 체계 (Evaluations, Evals)]</strong></p>
+<ul>
+<li>
+<p>“이 프롬프트가 이전보다 나아졌는가?”라는 질문에 데이터로 답하는 과정</p>
+<ul>
+<li><strong>LLM-as-a-Judge:</strong> 더 똑똑한 모델(예: GPT-4o)을 심판으로 세워, 서비스 모델의 답변 품질을 점수로 매긴다.</li>
+<li><strong>Regression Testing:</strong> 프롬프트를 수정했을 때, 기존에 잘 되던 답변들이 망가지지 않았는지 수백 개의 테스트 케이스를 돌려 확인</li>
+<li><strong>Ground Truth:</strong> 정답셋을 만들어 놓고 AI의 답변과 유사도를 비교</li>
+<li><strong>회의적인(Skeptical) 평가자 구성:</strong> 코드를 생성한 에이전트와 독립된 평가용 인스턴스를 두어, “이 PR의 문제점만 찾아라”와 같은 회의적인 프롬프트로 리뷰를 요청</li>
+<li><strong>무한 루프 방지 및 해결:</strong> 에이전트가 리뷰 코멘트를 반영하고, 수정하고, 다시 평가받는 과정을 루프(Ralph Wiggum Loop)로 구축하여 사람의 개입 없이 기준을 통과할 때까지 반복</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[명시적 도구 경계]</strong></p>
+<ul>
+<li>
+<p>AI 에이전트가 어떤 도구를 쓸 수 있고, 어디까지 접근할 수 있는지를 명확하게 제한</p>
+<ul>
+<li>파일 시스템: src/ 읽기·쓰기 가능, config/ 읽기만 가능</li>
+<li>API: 내부 API 호출 가능, 외부 서비스 호출 불가</li>
+<li>데이터베이스: SELECT 가능, DROP TABLE 절대 불가</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[검증(Validation)]</strong></p>
+<p>결과물이 괜찮은지 기준을 미리 정의해두는 것</p>
+<ul>
+<li>이런 결과물이 나와야 해</li>
+<li>작업 지시서와 검증 기준 합의</li>
+</ul>
+</li>
+<li>
+<p><strong>[평가 체계 (Evaluations, Evals)]</strong></p>
+<p>“이 프롬프트가 이전보다 나아졌는가?”라는 질문에 데이터로 답하는 과정.</p>
+<ul>
+<li>
+<p><strong>LLM-as-a-Judge:</strong> 더 똑똑한 모델(예: GPT-4o)을 심판으로 세워, 서비스 모델의 답변 품질을 점수로 매긴다.</p>
+</li>
+<li>
+<p><strong>Ground Truth:</strong> 정답셋을 만들어 놓고 AI의 답변과 유사도를 비교</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>[명시적 도구 경계]</strong></p>
+<p>AI 에이전트가 <strong>어떤 도구를 쓸 수 있고, 어디까지 접근할 수 있는지</strong>를 명확하게 제한</p>
+<ul>
+<li>파일 시스템: <code>src/</code> 읽기·쓰기 가능, <code>config/</code> 읽기만 가능</li>
+<li>API: 내부 API 호출 가능, 외부 서비스 호출 불가</li>
+<li>데이터베이스: <code>SELECT</code> 가능, <code>DROP TABLE</code> 절대 불가</li>
+</ul>
+<blockquote>
+<p>프롬프트는 <strong>부탁</strong>이고, 도구 경계는 <strong>물리적 차단</strong></p>
+</blockquote>
+</li>
+</ul>
+<h3 id="4-엔트로피-관리-및-가비지-컬렉션-entropy-management--garbage-collection--결과물을-어떻게-신뢰할-것인가품질"><strong>4. 엔트로피 관리 및 가비지 컬렉션 (Entropy Management / Garbage Collection) — 결과물을 어떻게 신뢰할 것인가(품질)</strong></h3>
+<p>AI가 작업을 수행하면서 발생하는 기술 부채나 불필요한 데이터를 정리하는 과정입니다. 이전 단계에서 쌓인 오정보나 중복된 코드를 에이전트가 직접 정리하여 효율성을 유지</p>
+<ul>
+<li>
+<p><strong>[관측성 및 로깅 (Observability &#x26; Monitoring)]</strong></p>
+<p>실제 서비스 중 AI가 어떻게 작동하는지 추적하는 ‘CCTV’와 같다.</p>
+<ul>
+<li><strong>Traceability:</strong> 에이전트가 어떤 도구를 써서 어떤 답변을 냈는지 전체 경로를 추적</li>
+<li><strong>Token &#x26; Cost Control:</strong> 예상치 못한 무한 루프나 과도한 토큰 사용으로 인한 ‘비용 폭탄’을 방지하기 위한 한계선(Threshold)을 설정</li>
+<li><strong>Feedback Loop:</strong> 사용자의 ‘좋아요/싫어요’ 데이터를 수집하여 다시 프롬프트나 컨텍스트 개선에 활용</li>
+</ul>
+</li>
+<li>
+<p><strong>[지속적 피드백 루프]</strong></p>
+<p>AI가 만든 코드를 주기적으로 점검하고 품질이 떨어지는 부분을 자동으로 감지 및 정리</p>
+<ul>
+<li>실행루프(Agent Loop)
+<ul>
+<li>수정 → 검증 → 수정 → 확인 을 만족할 때까지 반복</li>
+<li>workflow 반복</li>
+</ul>
+</li>
+<li>코딩 규칙 위반 자동 감지</li>
+<li>중복 코드 발견 및 리팩토링 PR 자동 생성</li>
+<li>사용하지 않는 코드 자동 제거</li>
+</ul>
+<blockquote>
+<p>에이전트가 실수할 때마다, 그 실수는 <strong>새로운 규칙</strong>이 된다.
+린터 규칙이 추가되고, 테스트가 추가되고, 제약이 추가되고, <strong>마구가 점점 더 정교해짐</strong></p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h2 id="에이전트의-위임-범위">에이전트의 위임 범위</h2>
+<p>제대로 구축된 하네스 환경에서 에이전트는 단순한 코드 스니펫을 넘어 다음과 같은 광범위한 작업을 수행할 수 있다.</p>
+<ul>
+<li>
+<p>제품 코드 및 테스트 작성</p>
+</li>
+<li>
+<p>CI/CD 파이프라인 구성 및 릴리스 툴링</p>
+</li>
+<li>
+<p>내부 개발자 도구 및 리포지터리 관리 스크립트 작성</p>
+</li>
+<li>
+<p>문서화 및 설계 내역 정리</p>
+</li>
+<li>
+<p>PR 리뷰 코멘트 작성 및 응답</p>
+</li>
+<li>
+<p>생산 대시보드 및 관측성(Observability) 정의 파일 설정</p>
+</li>
+</ul>
+<h2 id="4대-축의-상호작용-the-synergy">4대 축의 상호작용 (The Synergy)</h2>
+<p>하네스 엔지니어링이 완성되면 비로소 다른 축들이 빛을 발한다.</p>
+<ol>
+<li>
+<p><strong>Prompt(프롬프트) + Harness(하네스):</strong> 아무리 프롬프트를 잘 짜도 AI는 1%의 확률로 헛소리를 하는데, 하네스는 그 1%를 잡아낸다.</p>
+</li>
+<li>
+<p><strong>Context(컨텍스트) + Harness(하네스):</strong> 외부 지식을 가져올 때(RAG), 하네스는 그 지식이 질문과 관련이 있는지, 혹은 오염된 데이터인지 검사한다.</p>
+</li>
+<li>
+<p><strong>Agentic(에이전틱) + Harness(하네스):</strong> 자율적으로 행동하는 에이전트에게 “최대 5단계까지만 생각하라”거나 “이 API는 호출하지 마라”는 물리적 제약(Constraints)을 부여한다.</p>
+</li>
+</ol>
+<p><img alt="" loading="lazy" decoding="async" width="666" height="793" src="/_astro/merged-a1e0405b8bdff5cc47b8.Bf_Slq4e_2ppXWT.webp" srcset=""></p>
+<pre class="mermaid">flowchart TD
+    A["👤 사용자 요청"] --> B["🚦 Router&#x3C;br>의도 분석"]
+    B -->|모호한 요청| C["❓ 인터뷰&#x3C;br>되물어보기"]
+    B -->|명확한 작업| D["📋 Context Manager&#x3C;br>필요한 정보만 제공"]
+    B -->|일반 대화| E["💬 일반 LLM"]
+    D --> F["⚙️ Worker&#x3C;br>코드 작성"]
+    F --> G["✅ 자동 테스트&#x3C;br>검증"]
+    G -->|통과| H["🎉 완료"]
+    G -->|실패| I["🔄 에러 피드백"]
+    I --> F</pre>
+<h3 id="개발자-역할의-진화"><strong>개발자 역할의 진화</strong></h3>
+<p>엔지니어링역할비유</p>
+<table>
+<tbody>
+<tr>
+<td>엔지니어링</td>
+<td>역할</td>
+<td>비유</td>
+</tr>
+<tr>
+<td>Prompt</td>
+<td>프롬프트 엔지니어</td>
+<td>AI에게 의도를 정확히 전달하는 사람</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>컨텍스트 아키텍트</td>
+<td>AI가 참조할 지식 체계를 설계하는 사람</td>
+</tr>
+<tr>
+<td><b>Harness</b></td>
+<td><b>플랫폼 엔지니어</b></td>
+<td><b>AI가 실수할 수 없는 환경을 만드는 사람</b></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>엔지니어링</th><th><strong>역할</strong></th><th><strong>비유</strong></th></tr></thead><tbody><tr><td>Prompt</td><td>프롬프트 엔지니어</td><td>AI에게 의도를 정확히 전달하는 사람</td></tr><tr><td>Context</td><td>컨텍스트 아키텍트</td><td>AI가 참조할 지식 체계를 설계하는 사람</td></tr><tr><td><strong>Harness</strong></td><td><strong>플랫폼 엔지니어</strong></td><td><strong>AI가 실수할 수 없는 환경을 만드는 사람</strong></td></tr></tbody></table>
+<h1 id="하네스-엔지니어링의-두-단계의-역할">하네스 엔지니어링의 두 단계의 역할</h1>
+<h2 id="repository-하네스">Repository 하네스</h2>
+<blockquote>
+<p>우리회사는 이렇다!</p>
+</blockquote>
+<hr>
+<ul>
+<li>
+<p>AI가 이 저장소 전체에서 어떻게 일할지</p>
+</li>
+<li>
+<p>문서 구조, 팀 규칙, 코드 린터</p>
+</li>
+<li>
+<p>아키텍처 제약 같은 공통환경</p>
+</li>
+<li>
+<p>모든 프로젝트에 적용되는 기반</p>
+</li>
+</ul>
+<h2 id="application-하네스">Application 하네스</h2>
+<blockquote>
+<p>이 프로젝트는 이렇다!</p>
+</blockquote>
+<hr>
+<ul>
+<li>
+<p>프로젝트 별로 만들고 싶은 앱, 서비스</p>
+</li>
+<li>
+<p>어떤 기능과 경험을 줘야 하는지</p>
+</li>
+<li>
+<p>AI가 이 앱을 위해 어떻게 판단할지</p>
+</li>
+<li>
+<p>해당 프로젝트에만 적용되는 규칙</p>
+</li>
+</ul>
+<p><a href="https://openai.com/ko-KR/index/harness-engineering/">https://openai.com/ko-KR/index/harness-engineering/</a></p>
+<p><a href="https://openai.com/ko-KR/index/harness-engineering/">https://openai.com/ko-KR/index/harness-engineering/</a></p>
+<p>OpenAI에서 5개월 간 노코드로 하네스 엔지니어링을 수행</p>
+<p>아래와 같은 구조로 시작</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">AGENTS.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">ARCHITECTURE.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">docs/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> design-docs/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> index.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> core-beliefs.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   └──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> ...</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> exec-plans/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> active/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> completed/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   └──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> tech-debt-tracker.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> generated/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   └──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> db-schema.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> product-specs/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> index.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> new-user-onboarding.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   └──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> ...</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> references/</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> design-system-reference-llms.txt</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> nixpacks-llms.txt</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   ├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> uv-llms.txt</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">│</span><span style="color:#032F62;--shiki-dark:#9ECBFF">   └──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> ...</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> DESIGN.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> FRONTEND.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> PLANS.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> PRODUCT_SENSE.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> QUALITY_SCORE.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">├──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> RELIABILITY.md</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">└──</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> SECURITY.md</span></span></code></pre>
+<h2 id="구조분석"><strong>구조분석</strong></h2>
+<p>파일/폴더 역할 작성 주체</p>
+<table>
+<tbody>
+<tr>
+<td>AGENTS.md</td>
+<td>에이전트 행동 규칙</td>
+<td>인간 (한 번)</td>
+</tr>
+<tr>
+<td>ARCHITECTURE.md</td>
+<td>시스템 전체 지도</td>
+<td>인간 (한 번 + 업데이트)</td>
+</tr>
+<tr>
+<td>design-docs/</td>
+<td>설계 원칙 및 결정</td>
+<td>인간</td>
+</tr>
+<tr>
+<td>exec-plans/active/</td>
+<td>현재 작업 지시서</td>
+<td>인간이 작성 → 에이전트가 실행</td>
+</tr>
+<tr>
+<td>product-specs/</td>
+<td>기능 명세</td>
+<td>인간</td>
+</tr>
+<tr>
+<td>references/</td>
+<td>압축된 라이브러리 문서</td>
+<td>인간 (or 에이전트가 생성)</td>
+</tr>
+<tr>
+<td>DESIGN.md</td>
+<td>API 포맷·네이밍 등 내부 설계 기준</td>
+<td>인간 (한 번 + 협의 시 업데이트)</td>
+</tr>
+<tr>
+<td>FRONTEND.md</td>
+<td>클라이언트 연동 계약·에러코드 정의</td>
+<td>인간 (클라이언트팀과 협의)</td>
+</tr>
+<tr>
+<td>QUALITY_SCORE.md</td>
+<td>코드 품질 자체 평가 체크리스트</td>
+<td>인간</td>
+</tr>
+<tr>
+<td>RELIABILITY.md</td>
+<td>장애 대응·타임아웃·재시도 기준</td>
+<td>인간</td>
+</tr>
+<tr>
+<td>SECURITY.md</td>
+<td>보안 체크리스트·금지 패턴</td>
+<td>인간</td>
+</tr>
+<tr>
+<td>docs/generated/</td>
+<td>에이전트가 생성한 산출물</td>
+<td><b>에이전트</b></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>파일/폴더</th><th>역할</th><th>작성 주체</th></tr></thead><tbody><tr><td><code>AGENTS.md</code></td><td>에이전트 행동 규칙</td><td>인간 (한 번)</td></tr><tr><td><code>ARCHITECTURE.md</code></td><td>시스템 전체 지도</td><td>인간 (한 번 + 업데이트)</td></tr><tr><td><code>design-docs/</code></td><td>설계 원칙 및 결정</td><td>인간</td></tr><tr><td><code>exec-plans/active/</code></td><td>현재 작업 지시서</td><td>인간이 작성 → 에이전트가 실행</td></tr><tr><td><code>product-specs/</code></td><td>기능 명세</td><td>인간</td></tr><tr><td><code>references/</code></td><td>압축된 라이브러리 문서</td><td>인간 (or 에이전트가 생성)</td></tr><tr><td><code>DESIGN.md</code></td><td>API 포맷·네이밍 등 내부 설계 기준</td><td>인간 (한 번 + 협의 시 업데이트)</td></tr><tr><td><code>FRONTEND.md</code></td><td>클라이언트 연동 계약·에러코드 정의</td><td>인간 (클라이언트팀과 협의)</td></tr><tr><td><code>QUALITY_SCORE.md</code></td><td>코드 품질 자체 평가 체크리스트</td><td>인간</td></tr><tr><td><code>RELIABILITY.md</code></td><td>장애 대응·타임아웃·재시도 기준</td><td>인간</td></tr><tr><td><code>SECURITY.md</code></td><td>보안 체크리스트·금지 패턴</td><td>인간</td></tr><tr><td><code>docs/generated/</code></td><td>에이전트가 생성한 산출물</td><td><strong>에이전트</strong></td></tr></tbody></table>
+<h3 id="에이전트-제어-레이어"><strong>에이전트 제어 레이어</strong></h3>
+<p>AGENTS.md</p>
+<p><code>AGENTS.md</code></p>
+<p>에이전트가 어떻게 행동해야 하는지 정의하는 메타 지시서 [<strong>행동 헌법]</strong></p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 너는 어떤 역할이야</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 코드 작성할 때 이 규칙을 따라</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 모르면 이렇게 해</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 절대 하면 안 되는 것</span></span></code></pre>
+<p>사람으로 치면 “신입 개발자 온보딩 문서”인데, 읽는 대상이 AI 이기 때문에 모호한 표현 없이 명확하게 작성해야 한다. Claude Code 기준으로는 이 파일을 프로젝트 루트에 두면 매 세션마다 자동으로 읽음</p>
+<p>ARCHITECTURE.md</p>
+<p><code>ARCHITECTURE.md</code></p>
+<p>시스템 전체 구조를 에이전트가 참조하는 지도</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 서비스 구성 (모듈, 레이어)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 주요 데이터 흐름</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 외부 의존성</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 레이어 간 책임 경계</span></span></code></pre>
+<p>에이전트가 새 기능을 추가할 때 “이게 어디에 들어가야 하지?”를 판단하는 근거. 이게 없으면 엉뚱한 레이어에 코드를 추가하게됨</p>
+<h3 id="의사결정-문서-레이어-docs"><strong>의사결정 문서 레이어</strong> (<code>docs/</code>)</h3>
+<p>design-docs/</p>
+<p><code>design-docs/</code></p>
+<p>기술적 의사결정 기록. ADR(Architecture Decision Record)과 비슷</p>
+<ul>
+<li>
+<p>index.md — 전체 설계 문서 목록</p>
+</li>
+<li>
+<p>core-beliefs.md — “우리는 이런 이유로 이렇게 설계한다”는 원칙</p>
+</li>
+<li>
+<p><code>index.md</code> — 전체 설계 문서 목록</p>
+</li>
+<li>
+<p><code>core-beliefs.md</code> — “우리는 이런 이유로 이렇게 설계한다”는 원칙</p>
+</li>
+</ul>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8"># core</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8">beliefs.md</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> DB 트랜잭션 경계는 Service 레이어에서만 관리한다</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 외부 API 호출은 반드시 별도 Client 클래스로 분리한다</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 도메인 객체는 인프라 의존성을 가지지 않는다</span></span></code></pre>
+<p>exec-plans/</p>
+<p><code>exec-plans/</code></p>
+<p>실행 계획 관리.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">exec</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8">plans</span><span style="color:#D73A49;--shiki-dark:#F97583">/</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">├── active</span><span style="color:#D73A49;--shiki-dark:#F97583">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">        ← 지금 진행 중인 작업</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">├── completed</span><span style="color:#D73A49;--shiki-dark:#F97583">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">     ← 완료된 작업 (히스토리)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">└── tech</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8">debt</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8">tracker.md  ← 기술 부채 목록</span></span></code></pre>
+<p>active/ 안에 파일 하나가 하나의 작업 단위</p>
+<p><code>active/</code> 안에 파일 하나가 하나의 작업 단위</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="java"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8"># feat</span><span style="color:#D73A49;--shiki-dark:#F97583">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8">sensor</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8">api.md</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">## 목표</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">쿠폰 API 구현</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">## 범위</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] CouponController</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] CouponService</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] CouponRepository</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">## 제약</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 쿠폰 중복 등록은 안됨</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 쿠폰은 최대 2개까지만 가능</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">## 완료 기준</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 단위 테스트 커버리지 </span><span style="color:#005CC5;--shiki-dark:#79B8FF">80</span><span style="color:#D73A49;--shiki-dark:#F97583">%</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 이상</span></span></code></pre>
+<p>product-specs/</p>
+<p><code>product-specs/</code></p>
+<p>기능 명세서 (AI 에이전트가 “무엇을 만들지” 참조)</p>
+<ul>
+<li>
+<p>index.md — 전체 기능 목록 및 상태</p>
+</li>
+<li>
+<p>new-user-onboarding.md — 기능별 상세 명세</p>
+</li>
+</ul>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>## 사용자 스토리</span></span>
+<span class="line"><span>신규 가입자가 앱 첫 실행 시 3단계 온보딩을 완료한다</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 화면 흐름</span></span>
+<span class="line"><span>1. 환영 화면</span></span>
+<span class="line"><span>2. 관심사 선택</span></span>
+<span class="line"><span>3. 알림 동의</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## API 요구사항</span></span>
+<span class="line"><span>- POST /onboarding/complete</span></span>
+<span class="line"><span>- 완료 시 웰컴 쿠폰 발급 (CouponService 연동)</span></span></code></pre>
+<p>references/</p>
+<ul>
+<li>
+<p><code>index.md</code> — 전체 기능 목록 및 상태</p>
+</li>
+<li>
+<p><code>new-user-onboarding.md</code> — 기능별 상세 명세</p>
+</li>
+</ul>
+<p><code>references/</code></p>
+<p>외부 라이브러리 LLM 최적화 문서</p>
+<p>라이브러리 공식 문서를 그대로 넣으면 토큰 낭비가 심해서, <strong>AI가 읽기 좋게 압축한 버전</strong>을 따로 만들어둔 것</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Spring Data JPA - LLM Reference</span></span>
+<span class="line"><span>## Repository 정의</span></span>
+<span class="line"><span>interface UserRepository extends JpaRepository&#x3C;User, Long> {}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 쿼리 메서드</span></span>
+<span class="line"><span>findByEmailAndStatus(String email, Status status)</span></span>
+<span class="line"><span>→ WHERE email = ? AND status = ?</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 주의사항</span></span>
+<span class="line"><span>- N+1 문제: @EntityGraph 또는 fetch join 사용</span></span></code></pre>
+<p>[예: Spring Data JPA 문서]</p>
+<h3 id="품질-기준-레이어"><strong>품질 기준 레이어</strong></h3>
+<p>QUALITY_SCORE.md — 에이전트가 코드를 생성할 때 지켜야 할 기준</p>
+<p><code>QUALITY_SCORE.md</code> — 에이전트가 코드를 생성할 때 지켜야 할 기준</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">## 체크리스트</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] 메서드 단위 테스트 존재</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] 예외 처리 명시</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] 로깅 포함</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [ ] 매직 넘버 없음</span></span></code></pre>
+<p>RELIABILITY.md — 장애 대응 기준</p>
+<p><code>RELIABILITY.md</code> — 장애 대응 기준</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 외부 API 호출은 timeout 설정 필수</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 재시도 로직은 exponential backoff 적용</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 서킷브레이커 적용 대상 목록</span></span></code></pre>
+<p>SECURITY.md — 보안 체크리스트</p>
+<p><code>SECURITY.md</code>  — 보안 체크리스트</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> SQL 인젝션 방어 (파라미터 바인딩 필수)</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 민감 정보 로그 출력 금지</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 인증 없는 엔드포인트 목록 명시</span></span></code></pre>
+<p>DESIGN.md — 디자인 시스템 제약: <strong>시스템의 미적/구조적 일관성 기준</strong></p>
+<p><code>DESIGN.md</code> — 디자인 시스템 제약: <strong>시스템의 미적/구조적 일관성 기준</strong></p>
+<p>프론트엔드가 있으면 UI 디자인 시스템이 들어가지만, 백엔드 전용 프로젝트라면 API 구조 포멧 정의</p>
+<p>에이전트가 새 API를 만들 때마다 이 파일을 참조해서 포맷을 통일시킴. 이게 없으면 어떤 API는 data, 어떤 건 result, 어떤 건 response로 제각각 만들게됨</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">**# DESIGN.md</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">## API 응답 포맷</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">모든 응답은 아래 구조를 따른다</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "success": true,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "data": {},</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "error": null</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">## 에러 응답 구조</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "success": false,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "data": null,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "error": {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    "code": "USER_NOT_FOUND",</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    "message": "사용자를 찾을 수 없습니다"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">## 네이밍 컨벤션</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> URL: kebab-case  → /car-wash-missions</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> JSON 필드: camelCase → userId, createdAt</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">-</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> 에러 코드: UPPER_SNAKE_CASE → INVALID_TOKEN</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-light-font-weight:bold;--shiki-dark:#79B8FF;--shiki-dark-font-weight:bold">## 페이지네이션 구조</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "content": [],</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "page": 0,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "size": 20,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  "totalElements": 100</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}**</span></span></code></pre>
+<p>FRONTEND.md — 디자인 시스템 제약 : 외부(클라이언트)와의 연동</p>
+<p><code>FRONTEND.md</code>  — 디자인 시스템 제약 : 외부(클라이언트)와의 연동</p>
+<p>프론트팀이 없어도, 앱 클라이언트나 외부 연동이 있다면 필요</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>## 클라이언트 연동 원칙</span></span>
+<span class="line"><span>- 필드 삭제 금지, 추가만 허용 (하위 호환성 유지)</span></span>
+<span class="line"><span>- Null 필드는 응답에서 제외하지 않고 명시적으로 null 반환</span></span>
+<span class="line"><span>- 날짜 포맷: ISO 8601 (2024-01-15T09:00:00Z)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 인증</span></span>
+<span class="line"><span>- Authorization: Bearer {token} 헤더 방식</span></span>
+<span class="line"><span>- 토큰 만료 시 401 응답, refresh는 클라이언트 책임</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 에러 코드 목록</span></span>
+<span class="line"><span>| 코드 | 의미 | HTTP Status |</span></span>
+<span class="line"><span>|------|------|-------------|</span></span>
+<span class="line"><span>| USER_NOT_FOUND | 사용자 없음 | 404 |</span></span>
+<span class="line"><span>| INVALID_TOKEN | 토큰 오류 | 401 |</span></span>
+<span class="line"><span>| MISSION_EXPIRED | 미션 만료 | 410 |</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>## 비동기 작업 처리</span></span>
+<span class="line"><span>- 즉시 응답: 202 Accepted + jobId 반환</span></span>
+<span class="line"><span>- 상태 조회: GET /jobs/{jobId}</span></span></code></pre>
+<h2 id="하나의-작업에-하네스를-적용해-보기">하나의 작업에 하네스를 적용해 보기</h2>
+<p>예를 들어 “사용자 조회 API에 검색 기능을 추가해 달라”는 작업을 에이전트에 맡긴다고 하자. 단순히 <code>AGENTS.md</code>에 “보안을 지켜라”라고 쓰는 것으로는 충분하지 않다. 요청 입력, 작업 가능 범위, 완료 검사, 실패 시 복구 기준을 각각 정해야 한다.</p>
+<pre class="mermaid">flowchart LR
+    R[요구와 허용 범위] --> C[저장소 문맥 확인]
+    C --> P[변경 계획]
+    P --> E[허용 파일 수정]
+    E --> T[타입·단위·통합 검사]
+    T -->|통과| D[diff와 위험 검토]
+    T -->|실패| F[오류 분류]
+    F -->|수정 가능| E
+    F -->|반복 상한| H[중단·사람에게 보고]
+    D -->|승인 기준 충족| O[결과]</pre>
+<p>이 흐름에서 저장소 문서는 <strong>어디를 읽고 어떻게 작성할지</strong> 알려준다. 파일 접근 제한과 CI 검사는 <strong>어기면 실패하게 하는 장치</strong>다. 에이전트가 스스로 성공했다고 말하는 것은 검증 결과가 아니다. 테스트가 무엇을 검사했고 무엇을 검사하지 않았는지 사람이 읽을 수 있어야 한다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>경계</th><th>구체적 규칙</th><th>확인 방법</th></tr></thead><tbody><tr><td>입력</td><td>검색어 1~100자, 빈 값 거절</td><td>요청 검증 테스트</td></tr><tr><td>접근</td><td>인증된 사용자에게 허용된 사용자만 조회</td><td>권한 통합 테스트</td></tr><tr><td>수정 범위</td><td>API·서비스·테스트 파일만 변경</td><td><code>git diff --name-only</code> 검토</td></tr><tr><td>품질</td><td>정상·빈 검색·권한 거절 사례</td><td>자동 테스트와 응답 예시</td></tr><tr><td>반복</td><td>같은 오류를 세 번 수정해도 실패하면 중단</td><td>시도 횟수와 마지막 오류 기록</td></tr></tbody></table>
+<p>숫자 <code>100자</code>와 <code>3회</code>는 이 <strong>가상 서비스의 예시 값</strong>이다. 기존 제품의 계약과 사용량을 보고 조정한다. 특히 “최대 다섯 번 고치라”는 지시는 무조건 다섯 번 실행하라는 뜻이 아니다. 같은 실패를 반복하면 원인을 기록하고 멈출 수 있어야 한다.</p>
+<h3 id="도구-요청을-코드로-제한">도구 요청을 코드로 제한</h3>
+<p>에이전트가 파일 수정 도구를 요청한다고 가정한다. 허용된 경로인지 검사하는 예시는 다음과 같다. 실제 구현에서는 경로 정규화와 심볼릭 링크, 작업 디렉터리 밖으로 나가는 경로도 검사해야 한다.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> pathlib </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> PurePosixPath</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">ALLOWED_ROOTS</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    PurePosixPath(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"src/api"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    PurePosixPath(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"src/service"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    PurePosixPath(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"tests"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> allowed_relative_path</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(raw: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) -> </span><span style="color:#005CC5;--shiki-dark:#79B8FF">bool</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    path </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> PurePosixPath(raw)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> path.is_absolute() </span><span style="color:#D73A49;--shiki-dark:#F97583">or</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> ".."</span><span style="color:#D73A49;--shiki-dark:#F97583"> in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> path.parts:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> False</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> any</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(path </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> root </span><span style="color:#D73A49;--shiki-dark:#F97583">or</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> root </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> path.parents </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> root </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> ALLOWED_ROOTS</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">assert</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> allowed_relative_path(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"src/api/users.py"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">assert</span><span style="color:#D73A49;--shiki-dark:#F97583"> not</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> allowed_relative_path(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"../secrets.txt"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">assert</span><span style="color:#D73A49;--shiki-dark:#F97583"> not</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> allowed_relative_path(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"docs/requirements.md"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<p>이 검사는 <strong>문자열 수준의 첫 관문</strong>일 뿐이다. 파일 시스템 접근 권한 자체를 이 함수만으로 안전하게 만들 수 없다. 실제 작업 실행은 샌드박스·권한 설정에서 작업 폴더를 제한하고, 코드 검증은 별도로 수행한다. 문서 규칙은 모델이 이해하기 쉽게 쓰되, 중요한 제약은 서버·도구·CI에서 강제한다.</p>
+<h3 id="실패를-다음-개선으로-돌리는-방식">실패를 다음 개선으로 돌리는 방식</h3>
+<p>테스트가 실패하면 <code>실패한 명령, 종료 코드, 관련 파일, 변경한 가설</code>을 함께 기록한다. 에이전트가 새 코드를 내놓아도 실패했던 테스트와 이전에 통과한 테스트를 다시 실행한다. 어떤 수정이 왜 효과가 있었는지 확인되지 않으면 단순히 “통과”만 기록한 결과보다 재현성이 낮다. 반복 상한에 도달하거나 권한·요구 사항이 불명확하면 현재 변경과 미완료 작업을 분리해 보고한다.</p>
+<p>LLM 평가자로 코드 품질을 보조할 수 있지만, 평가자 점수는 테스트 결과나 접근 제어의 대체물이 아니다. 평가 문항과 사람의 리뷰 결과가 얼마나 일치하는지 확인하고, 오탐과 누락을 사례로 남긴다(<a href="https://docs.langchain.com/langsmith/evaluate-llm-application">LangSmith 평가 문서</a>). 이렇게 <strong>문서로 방향을 제시하고, 도구에서 범위를 제한하고, 테스트로 결과를 검증</strong>해야 하네스가 실제 작업을 제어한다.</p>
+<h2 id="이어서-읽기">이어서 읽기</h2>
+<p><a href="/posts/%ED%95%98%EB%84%A4%EC%8A%A4-%EC%97%94%EC%A7%80%EB%8B%88%EC%96%B4%EB%A7%81%EC%9C%BC%EB%A1%9C-%EC%84%9C%EB%B9%84%EC%8A%A4-%EB%A7%8C%EB%93%A4%EC%96%B4%EB%B3%B4%EA%B8%B0/">하네스 엔지니어링으로 서비스 만들어보기</a>에서는 문서와 검증 루프를 작은 서비스 작업에 연결한다.</p></div><aside class="adsense-strip is-live" data-ad-placement="article-bottom" aria-label="광고"><span class="ad-mark">광고</span><ins class="adsbygoogle" style="display:block;width:100%" data-ad-client="ca-pub-3181192548234541" data-ad-slot="7463508077" data-ad-format="autorelaxed"></ins><script data-astro-rerun>(window.adsbygoogle = window.adsbygoogle || []).push({});</script></aside></main><div class="toc-col"><aside class="toc" aria-label="목차" data-i18n-attr="aria-label:post.toc"><div class="toc-title" data-i18n="post.toc">목차</div><nav class="toc-tree" aria-label="목차"><ul><li><a href="#하네스-엔지니어링harness-engineering">하네스 엔지니어링(Harness Engineering)</a><ul><li><a href="#ai가-실수를-못하게-하기-위해-규칙과-울타리를-설계하는-기술--제어의-기술" class="level-2">AI가 실수를 못하게 하기 위해 규칙과 울타리를 설계하는 기술 — 제어의 기술</a><ul><li><a href="#말을-비유로-이해" class="level-3">[말을 비유로 이해]</a></li></ul></li><li><a href="#ai에게-잘-일할-수-있는-환경을-설계하는-것---팀원처럼-위임하는-방식" class="level-2">AI에게 잘 일할 수 있는 환경을 설계하는 것 - [팀원처럼 위임하는 방식]</a></li><li><a href="#하네스의-역할" class="level-2">하네스의 역할</a></li><li><a href="#하네스-엔지니어링의-4가지-구성-요소" class="level-2">하네스 엔지니어링의 4가지 구성 요소</a><ul><li><a href="#ai---새로-들어온-팀원" class="level-3">AI - 새로 들어온 팀원</a></li><li><a href="#1-규칙-헌법-가드레일rule-constitution-guardrails--의도를-잘-전달하기-위해-규칙을-적어놓은-문서소통" class="level-3">1. 규칙, 헌법, 가드레일(Rule, Constitution, Guardrails) -- 의도를 잘 전달하기 위해 규칙을 적어놓은 문서(소통)</a></li><li><a href="#2-아키텍처-제약-조건-및-스캐폴딩architectural-constraints--scaffolding--어떤-정보를-참조하게-할-것인가지식" class="level-3">2. 아키텍처 제약 조건 및 스캐폴딩(Architectural Constraints &amp; Scaffolding) — 어떤 정보를 참조하게 할 것인가(지식)</a></li><li><a href="#3-검증-및-피드백-루프-verification--feedback-loops--hooks--어떤-구조와-제약-속에서-움직이게-할-것인가규칙" class="level-3">3. 검증 및 피드백 루프 (Verification &amp; Feedback Loops / Hooks) — 어떤 구조와 제약 속에서 움직이게 할 것인가(규칙)</a></li><li><a href="#4-엔트로피-관리-및-가비지-컬렉션-entropy-management--garbage-collection--결과물을-어떻게-신뢰할-것인가품질" class="level-3">4. 엔트로피 관리 및 가비지 컬렉션 (Entropy Management / Garbage Collection) — 결과물을 어떻게 신뢰할 것인가(품질)</a></li></ul></li><li><a href="#에이전트의-위임-범위" class="level-2">에이전트의 위임 범위</a></li><li><a href="#4대-축의-상호작용-the-synergy" class="level-2">4대 축의 상호작용 (The Synergy)</a><ul><li><a href="#개발자-역할의-진화" class="level-3">개발자 역할의 진화</a></li></ul></li></ul></li><li><a href="#하네스-엔지니어링의-두-단계의-역할">하네스 엔지니어링의 두 단계의 역할</a><ul><li><a href="#repository-하네스" class="level-2">Repository 하네스</a></li><li><a href="#application-하네스" class="level-2">Application 하네스</a></li><li><a href="#구조분석" class="level-2">구조분석</a><ul><li><a href="#에이전트-제어-레이어" class="level-3">에이전트 제어 레이어</a></li><li><a href="#의사결정-문서-레이어-docs" class="level-3">의사결정 문서 레이어 (docs/)</a></li><li><a href="#품질-기준-레이어" class="level-3">품질 기준 레이어</a></li></ul></li><li><a href="#하나의-작업에-하네스를-적용해-보기" class="level-2">하나의 작업에 하네스를 적용해 보기</a><ul><li><a href="#도구-요청을-코드로-제한" class="level-3">도구 요청을 코드로 제한</a></li><li><a href="#실패를-다음-개선으로-돌리는-방식" class="level-3">실패를 다음 개선으로 돌리는 방식</a></li></ul></li><li><a href="#이어서-읽기" class="level-2">이어서 읽기</a></li></ul></li></ul></nav></aside></div><div class="post-extra"><div class="art-tags"><a href="/tag/ai-엔지니어링">AI 엔지니어링</a><a href="/tag/ai">AI</a><a href="/tag/하네스-엔지니어링">하네스 엔지니어링</a><a href="/tag/harness-engineering">Harness Engineering</a></div><section class="same-category" aria-label="같은 카테고리의 글" data-i18n-attr="aria-label:post.sameCategory"><h3 data-i18n="post.sameCategory">같은 카테고리의 글</h3><div class="same-list"><a href="/posts/4-agentic-engineering-에이전틱-엔지니어링-ai-에이전트를-설계하고-조율하는-기술"><span class="same-title">4. Agentic Engineering(에이전틱 엔지니어링) — AI 에이전트를 설계하고 조율하는 기술</span><span class="same-date">2026.08.04 이전</span></a><a href="/posts/하네스-엔지니어링으로-서비스-만들어보기"><span class="same-title">하네스 엔지니어링으로 서비스 만들어보기</span><span class="same-date">2026.08.04 이전</span></a><a href="/posts/2-context-engineering-컨텍스트-엔지니어링-ai에게-필요한-정보를-적절하게-제공하는-기술"><span class="same-title">2. Context Engineering(컨텍스트 엔지니어링) — AI에게 필요한 정보를 적절하게 제공하는 기술</span><span class="same-date">2026.04.08</span></a></div></section><div class="pn"><a class="prev" href="/posts/2-context-engineering-컨텍스트-엔지니어링-ai에게-필요한-정보를-적절하게-제공하는-기술"><div class="dir" data-i18n="post.prev">이전 글</div><div class="tt">2. Context Engineering(컨텍스트 엔지니어링) — AI에게 필요한 정보를 적절하게 제공하는 기술</div></a><a class="next" href="/posts/reactive-programming"><div class="dir" data-i18n="post.next">다음 글</div><div class="tt">Reactive Programming</div></a></div><section class="comments" id="comments"><div id="giscus-container" data-giscus="{&quot;enabled&quot;:true,&quot;repo&quot;:&quot;pscheol/pscheol.github.io&quot;,&quot;repoId&quot;:&quot;MDEwOlJlcG9zaXRvcnkxOTUzNzcwODg=&quot;,&quot;category&quot;:&quot;Announcements&quot;,&quot;categoryId&quot;:&quot;DIC_kwDOC6U3wM4DGnbX&quot;,&quot;mapping&quot;:&quot;pathname&quot;,&quot;strict&quot;:&quot;0&quot;,&quot;reactionsEnabled&quot;:&quot;1&quot;,&quot;emitMetadata&quot;:&quot;0&quot;,&quot;inputPosition&quot;:&quot;bottom&quot;,&quot;theme&quot;:&quot;dark&quot;,&quot;lang&quot;:&quot;ko&quot;,&quot;loading&quot;:&quot;lazy&quot;}"></div><script data-astro-rerun>
+      (() => {
+        const container = document.getElementById('giscus-container');
+        if (!container) return;
+        const g = JSON.parse(container.dataset.giscus || '{}');
+        container.innerHTML = '';
+        const s = document.createElement('script');
+        s.src = 'https://giscus.app/client.js';
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.setAttribute('data-repo', g.repo);
+        s.setAttribute('data-repo-id', g.repoId);
+        s.setAttribute('data-category', g.category);
+        s.setAttribute('data-category-id', g.categoryId);
+        s.setAttribute('data-mapping', g.mapping);
+        s.setAttribute('data-strict', g.strict);
+        s.setAttribute('data-reactions-enabled', g.reactionsEnabled);
+        s.setAttribute('data-emit-metadata', g.emitMetadata);
+        s.setAttribute('data-input-position', g.inputPosition);
+        s.setAttribute('data-theme', document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+        s.setAttribute('data-lang', g.lang);
+        s.setAttribute('data-loading', g.loading);
+        container.appendChild(s);
+      })();
+    </script></section><section class="related"><h3 data-i18n="post.related">이어서 읽을 글</h3><div class="rgrid"><a class="rcard" href="/posts/하네스-엔지니어링으로-서비스-만들어보기" style="--section-accent:#1854a8"><div class="rthumb tech has-cover"><img src="/thumbnails/하네스-엔지니어링으로-서비스-만들어보기.png" alt="" loading="lazy" decoding="async"></div><div class="rbody"><span class="rcat"><span class="dot tech"></span>AI 엔지니어링</span><h4>하네스 엔지니어링으로 서비스 만들어보기</h4><p class="rex">작은 FAQ 서비스 예제로 요구 문서, 허용 작업 범위, Gradio UI, 테스트와 변경 검토를 연결하는 하네스 작업 순서.</p><div class="rmeta">2026.08.04 이전 · <span data-read="5" data-read-mode="short">5분</span></div></div></a><a class="rcard" href="/posts/4-agentic-engineering-에이전틱-엔지니어링-ai-에이전트를-설계하고-조율하는-기술" style="--section-accent:#1854a8"><div class="rthumb tech has-cover"><img src="/thumbnails/4-agentic-engineering-에이전틱-엔지니어링-ai-에이전트를-설계하고-조율하는-기술.png" alt="" loading="lazy" decoding="async"></div><div class="rbody"><span class="rcat"><span class="dot tech"></span>AI 엔지니어링</span><h4>4. Agentic Engineering(에이전틱 엔지니어링) — AI 에이전트를 설계하고 조율하는 기술</h4><p class="rex">에이전트의 목표·상태·도구·종료 조건을 설계하고, 권한과 재시도 경계를 둔 뒤 단일·멀티 에이전트 구조를 평가하는 방법.</p><div class="rmeta">2026.08.04 이전 · <span data-read="7" data-read-mode="short">7분</span></div></div></a><a class="rcard" href="/posts/2-context-engineering-컨텍스트-엔지니어링-ai에게-필요한-정보를-적절하게-제공하는-기술" style="--section-accent:#1854a8"><div class="rthumb tech has-cover"><img src="/thumbnails/2-context-engineering-컨텍스트-엔지니어링-ai에게-필요한-정보를-적절하게-제공하는-기술.png" alt="" loading="lazy" decoding="async"></div><div class="rbody"><span class="rcat"><span class="dot tech"></span>AI 엔지니어링</span><h4>2. Context Engineering(컨텍스트 엔지니어링) — AI에게 필요한 정보를 적절하게 제공하는 기술</h4><p class="rex">검색 문서·대화 이력·도구 결과를 권한과 길이 제한 안에서 선별해 모델에 전달하는 방법과 검색 품질의 실패 지점을 설명한다.</p><div class="rmeta">2026.04.08 · <span data-read="8" data-read-mode="short">8분</span></div></div></a><a class="rcard" href="/posts/1-prompt-engineering-프롬프트-엔지니어링-ai에게-일-말-을-잘-거는-기술" style="--section-accent:#1854a8"><div class="rthumb tech has-cover"><img src="/thumbnails/1-prompt-engineering-프롬프트-엔지니어링-ai에게-일-말-을-잘-거는-기술.png" alt="" loading="lazy" decoding="async"></div><div class="rbody"><span class="rcat"><span class="dot tech"></span>AI 엔지니어링</span><h4>1. Prompt Engineering(프롬프트 엔지니어링) — AI에게 일(말)을 잘 거는 기술</h4><p class="rex">프롬프트의 목표·입력·제약·출력 형식을 설계하고, 예시와 단계별 검증을 통해 실패 사례를 줄이는 방법을 정리한다.</p><div class="rmeta">2026.04.08 · <span data-read="8" data-read-mode="short">8분</span></div></div></a></div></section></div></div></div><button type="button" class="to-top" data-to-top aria-label="맨 위로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></button><script type="module" src="/_astro/_...slug_.astro_astro_type_script_index_0_lang.BlXRUcIC.js"></script><footer class="site-footer"><div class="wrap footer-inner"><span>© 2026 거꾸로 바라본 세상</span><span>built with Astro · DaisyUI</span></div></footer></div><script type="application/json" id="i18n-data">{"defaultLocale":"ko","locales":["ko","en"],"catalog":{"ko":{"nav.aria":"주 메뉴","nav.allSuffix":"전체","header.searchBtn":"검색","header.menuBtn":"메뉴","search.dialog":"글 검색","search.placeholder":"제목·내용·태그로 검색","search.close":"닫기","search.hint":"제목·내용·태그로 검색해 보세요.","search.empty":"검색 결과가 없어요.","sidebar.categories":"카테고리","sidebar.allPosts":"전체 글","sidebar.search":"기록 검색","shell.breadcrumb":"현재 위치","shell.skip":"본문으로 건너뛰기","sidebar.tags":"태그","sidebar.visitors":"방문자 통계","sidebar.totalVisitors":"누적 방문 수","home.clearFilter":"전체 보기","home.empty":"조건에 맞는 글이 없어요.","home.countUnit":"개","pager.aria":"페이지 이동","pager.prev":"이전 페이지","pager.next":"다음 페이지","post.back":"목록으로","post.toc":"목차","post.tocMobile":"모바일 목차","post.sameCategory":"같은 카테고리의 글","post.prev":"이전 글","post.next":"다음 글","post.related":"이어서 읽을 글","theme.toDark":"Dark 테마로 전환","theme.toLight":"Lo-Fi 테마로 전환","lang.label":"언어","nav.home":"홈","nav.about":"소개","masthead.heading":"최신 글","masthead.tagline":"기술과 일상을 함께 기록합니다."},"en":{"nav.aria":"Main menu","nav.allSuffix":"All","header.searchBtn":"Search","header.menuBtn":"Menu","search.dialog":"Search posts","search.placeholder":"Search title, content, tags","search.close":"Close","search.hint":"Search by title, content, or tags.","search.empty":"No results found.","sidebar.categories":"Categories","sidebar.allPosts":"All posts","sidebar.search":"Search notes","shell.breadcrumb":"Current location","shell.skip":"Skip to content","sidebar.tags":"Tags","sidebar.visitors":"Visitor stats","sidebar.totalVisitors":"Total visits","home.clearFilter":"Show all","home.empty":"No posts match this filter.","home.countUnit":"","pager.aria":"Pagination","pager.prev":"Previous page","pager.next":"Next page","post.back":"Back to list","post.toc":"Contents","post.tocMobile":"Mobile contents","post.sameCategory":"More in this category","post.prev":"Previous","post.next":"Next","post.related":"Keep reading","theme.toDark":"Switch to dark theme","theme.toLight":"Switch to light theme","lang.label":"Language","nav.home":"Home","nav.about":"About Me","masthead.heading":"Latest","masthead.tagline":"Notes on tech and daily life."}}}</script><script type="module" src="/_astro/BaseLayout.astro_astro_type_script_index_0_lang.DJj2JKTD.js"></script><script type="module" src="/_astro/BaseLayout.astro_astro_type_script_index_1_lang.BJMdgpUC.js"></script></body></html>
